@@ -63,6 +63,7 @@ class Skip(Command):
             path.append(self.label)
         return values
 
+
 class Assign(Command):
     def __init__(self, variable, expression, label=None):
         super().__init__(label=label)

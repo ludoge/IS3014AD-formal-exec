@@ -22,7 +22,7 @@ def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg
 
     if prog.typename != "Sequence":
         # Not a sequence, we create a node and link all dangling edges to it
-        cfg.add_node(prog.label)
+        cfg.add_node(prog.label, command=prog.typename)
         for previous_node, condition, command in previous_edges:
             cfg.add_edge(previous_node, prog.label, booleanexpr=condition, command=command)
 
@@ -43,13 +43,13 @@ def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg
     if prog.typename == "While":
         # Here we actually need to loop
         # First we create an edge for the "if true"
-        condition, do = prog.children
-        cfg, dangling_edges = ast_to_cfg(do, cfg=cfg, previous_edges={(prog.label, condition, Skip())})
+        while_condition, do = prog.children
+        cfg, dangling_edges = ast_to_cfg(do, cfg=cfg, previous_edges={(prog.label, while_condition, Skip())})
         # Dangling edges loop back to the condition
         for previous_node, condition, command in dangling_edges:
             cfg.add_edge(previous_node, prog.label, booleanexpr=condition, command=command)
         # Don't forget to exit the loop; leave a dangling edge with the opposite of the condition
-        return cfg, {(prog.label, BooleanUnaryExp("!", condition), Skip())}
+        return cfg, {(prog.label, BooleanUnaryExp("!", while_condition), Skip())}
 
     if prog.typename == "Sequence":
         # A sequence command does not call for a node
@@ -59,6 +59,7 @@ def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg
             cfg, temp_edges = ast_to_cfg(command, cfg=cfg, previous_edges=temp_edges)
         return cfg, temp_edges
 
+
 def ast_to_cfg_with_end(prog):
     cfg, final_edges = ast_to_cfg(prog)
     cfg.add_node("END")
@@ -66,6 +67,7 @@ def ast_to_cfg_with_end(prog):
         cfg.add_edge(node, "END", booleanexpr=condition, command = command)
 
     return cfg
+
 
 def get_var_from_exp(expr):
     var = set([])
@@ -77,6 +79,7 @@ def get_var_from_exp(expr):
             if sub is not None:
                 var.update(get_var_from_exp(e))
     return var
+
 
 def get_var(cfg):
     """
@@ -91,6 +94,7 @@ def get_var(cfg):
                 var.update(get_var_from_exp(expr))
     return var
 
+
 def get_def(cfg):
     """
     Returns all variables assigned in cfg
@@ -104,6 +108,7 @@ def get_def(cfg):
             if cfg[u][v]['command'].typename == "Assign":
                 res.update(cfg[u][v]['command'].children[0].name)
     return res
+
 
 def get_ref(cfg):
     """
@@ -123,6 +128,35 @@ def get_ref(cfg):
                 res.update(get_var_from_exp(command.children[1]))
     return res
 
+
+def execution_path(graph, values):
+    current_node = 'START'
+    path = []
+    while current_node != "END":
+        path.append(current_node)
+        neighbors = list(graph.neighbors(current_node))
+        # First to choose next node
+        if len(neighbors)==1:
+            next_node = neighbors[0]
+        elif len(neighbors)==2:
+            if_node, else_node = neighbors[0], neighbors[1]
+            condition = graph.edges[current_node, if_node]['booleanexpr']
+            if condition.eval(values):
+                next_node = if_node
+            else:
+                next_node = else_node
+        #  Now we execute and move on
+        values = graph.edges[current_node, next_node]['command'].exec(values=values)
+        current_node = next_node
+    path.append('END')
+    return path
+
+
+
+
+    return path
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
     p1 = ast = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5), Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)),label=1)), label=0)
@@ -141,11 +175,17 @@ if __name__ == '__main__':
     #    print(cfg[u][v]['command'].typename)
     pos = nx.nx_pydot.pydot_layout(cfg)
     nx.draw_networkx(cfg, pos=pos, arrows=True)
-    nx.draw_networkx_edge_labels(cfg, pos=pos, font_size=3)
+    nx.draw_networkx_edge_labels(cfg, pos=pos, font_size=4)
     plt.axis("off")
     plt.show()
+
 
     print(cprog)
     print(get_var(cfg))
     print(get_def(cfg))
     print(get_ref(cfg))
+
+    #for path in nx.all_simple_paths(cfg, source= "START", target="END"):
+    #    print(path)
+    val = {'X': 10, 'Y': 0}
+    print(execution_path(cfg, val))
