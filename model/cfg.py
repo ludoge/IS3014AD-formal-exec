@@ -152,10 +152,24 @@ def execution_path(graph, values):
     return path
 
 
+def get_paths_exact(cfg, k, u='START'):
+    """
+    Finds all paths of length k starting from u recursively
+    :param cfg:
+    :param k:
+    :param u:
+    :return:
+    """
+    if k == 0:
+        return [[u]]
+    paths = [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_exact(cfg, k-1, neighbor)]
+    return  paths
 
 
-    return path
-
+def get_paths(cfg, k, u='START', v='END'):
+    if k == 0:
+        return []
+    return [path for path in get_paths_exact(cfg, k+1, u) if path[-1] == v] + get_paths(cfg, k-1, u, v)
 
 if __name__ == '__main__':
     from anytree import RenderTree
@@ -189,3 +203,4 @@ if __name__ == '__main__':
     #    print(path)
     val = {'X': 10, 'Y': 0}
     print(execution_path(cfg, val))
+    print(get_paths(cfg, 12))
