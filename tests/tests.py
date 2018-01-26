@@ -64,8 +64,28 @@ class TestTD(Test):
         percent_coverage = 100*len(covered_decisions)/len(decisions)
         print(f"Test data covers {percent_coverage}% of decisions")
 
+
 class TestkTC(Test):
-    pass
+    def __init__(self, data, k):
+        super().__init__(data)
+        self.k = k
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+
+        k_paths = get_paths(cfg, self.k)
+        covered_k_paths = []
+
+        for value in self.data:
+            path = execution_path(cfg, value)
+            if path in k_paths:
+                print(f"{value} covers {self.k}-path {path}")
+                if path not in covered_k_paths:
+                    covered_k_paths.append(path)
+
+        percent_coverage = 100*len(covered_k_paths)/len(k_paths)
+        print(f"Test data covers {percent_coverage}% of {self.k}-paths")
+
 
 if __name__ == '__main__':
     from anytree import RenderTree
@@ -82,10 +102,13 @@ if __name__ == '__main__':
     ast = Sequence(p1, p2)
 
     #print(RenderTree(ast))
-    values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2}]
+    values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2},{'X': 1, 'Y': 2}]
 
     #testTA = TestTA(values)
     #testTA.runTests(ast)
 
-    testTD = TestTD(values)
-    testTD.runTests(ast)
+    #testTD = TestTD(values)
+    #testTD.runTests(ast)
+
+    testkTC = TestkTC(values, 6)
+    testkTC.runTests(ast)
