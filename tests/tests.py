@@ -22,12 +22,12 @@ class TestTA(Test):
         covered_assignments = []
         for u, v in cfg.edges:
             if cfg[u][v]['command'].typename == "Assign":
-                assignments.append(cfg[u][v]['command'].label)
+                assignments.append(cfg[u][v]['command'])
 
         for value in self.data:
             path = execution_path(cfg, value)
             for a in assignments:
-                if a in path:
+                if a.label in path:
                     print(f"{value} covers assignment {a}")
                     if a not in covered_assignments:
                         covered_assignments.append(a)
@@ -87,6 +87,17 @@ class TestkTC(Test):
         print(f"Test data covers {percent_coverage}% of {self.k}-paths")
 
 
+class TestiTB(Test):
+    def __init__(self, data, i):
+        super().__init__(data)
+        self.i = i
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+
+        print([[v for v in cfg.neighbors(u)] for u in cfg.nodes if cfg.nodes[u]['command'] == 'While'])
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
 
@@ -103,12 +114,16 @@ if __name__ == '__main__':
 
     #print(RenderTree(ast))
     values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2},{'X': 1, 'Y': 2}]
+    values = [{'X': x, 'Y': y} for x in range(-10, 10) for y in range(-10, 10)]
 
-    #testTA = TestTA(values)
-    #testTA.runTests(ast)
+    testTA = TestTA(values)
+    testTA.runTests(ast)
 
     #testTD = TestTD(values)
     #testTD.runTests(ast)
 
-    testkTC = TestkTC(values, 6)
-    testkTC.runTests(ast)
+    #testkTC = TestkTC(values, 6)
+    #testkTC.runTests(ast)
+
+    #testiTB = TestiTB(values, 6)
+    #testiTB.runTests(ast)
