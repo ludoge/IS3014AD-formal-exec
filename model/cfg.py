@@ -171,6 +171,24 @@ def get_paths(cfg, k, u='START', v='END'):
         return []
     return [path for path in get_paths_exact(cfg, k+1, u) if path[-1] == v] + get_paths(cfg, k-1, u, v)
 
+
+def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
+    """
+    Finds all paths with at most i loops for each 'While' starting from u recursively
+    """
+    if u == v:
+        return [[u]]
+
+    try:
+        visited[u] += 1
+    except KeyError:
+        visited[u] = 1
+
+    if visited[u] > i + 1:
+        return []
+    return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, visited) if path != []]
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
     p1 = ast = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5), Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)),label=1)), label=0)
@@ -204,3 +222,4 @@ if __name__ == '__main__':
     val = {'X': 10, 'Y': 0}
     print(execution_path(cfg, val))
     print(get_paths(cfg, 12))
+    print(get_paths_with_limited_loop(cfg, 1))
