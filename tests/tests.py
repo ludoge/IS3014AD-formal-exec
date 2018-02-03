@@ -87,6 +87,29 @@ class TestkTC(Test):
         print(f"Test data covers {percent_coverage}% of {self.k}-paths")
 
 
+class TestiTB(Test):
+    def __init__(self, data, i):
+        super().__init__(data)
+        self.i = i
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+
+        i_loops = get_paths_with_limited_loop(cfg, self.i)
+        covered_i_loops = []
+
+        for value in self.data:
+            path = execution_path(cfg, value)
+            if path in i_loops:
+                print(f"{value} covers {self.i}-loops {path}")
+                if path not in covered_i_loops:
+                    covered_i_loops.append(path)
+
+        percent_coverage = 100*len(covered_i_loops)/len(i_loops)
+        print(f"Test data covers {percent_coverage}% of {self.i}-loops")
+
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
 
@@ -101,7 +124,7 @@ if __name__ == '__main__':
 
     ast = Sequence(p1, p2)
 
-    #print(RenderTree(ast))
+    print(RenderTree(ast))
     values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2},{'X': 1, 'Y': 2}]
 
     #testTA = TestTA(values)
@@ -110,5 +133,8 @@ if __name__ == '__main__':
     #testTD = TestTD(values)
     #testTD.runTests(ast)
 
-    testkTC = TestkTC(values, 6)
-    testkTC.runTests(ast)
+    #testkTC = TestkTC(values, 6)
+    #testkTC.runTests(ast)
+
+    testiTB = TestiTB(values, 1)
+    testiTB.runTests(ast)

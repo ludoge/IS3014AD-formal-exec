@@ -179,9 +179,9 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     if u == v:
         return [[u]]
 
-    try:
+    if u in visited:
         visited[u] += 1
-    except KeyError:
+    else:
         visited[u] = 1
 
     if visited[u] > i + 1:
