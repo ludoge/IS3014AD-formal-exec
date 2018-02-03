@@ -109,6 +109,27 @@ class TestiTB(Test):
         print(f"Test data covers {percent_coverage}% of {self.i}-loops")
 
 
+class TestTDef(Test):
+    def __init__(self, data):
+        super().__init__(data)
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+
+        definitions = get_def(cfg)
+        covered_definitions = []
+
+        for value in self.data:
+            path = execution_path(cfg, value)
+            covered_definitions_in_path = get_assigns_with_next_reference(cfg, path)
+            for a in covered_definitions_in_path:
+                print(f"{value} covers definition {a}")
+                if a not in covered_definitions:
+                    covered_definitions.append(a)
+
+        percent_coverage = 100 * len(covered_definitions) / len(definitions)
+        print(f"Test data covers {percent_coverage}% of definitions")
+
 
 if __name__ == '__main__':
     from anytree import RenderTree
@@ -124,7 +145,7 @@ if __name__ == '__main__':
 
     ast = Sequence(p1, p2)
 
-    print(RenderTree(ast))
+    #print(RenderTree(ast))
     values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2},{'X': 1, 'Y': 2}]
 
     #testTA = TestTA(values)
@@ -136,5 +157,8 @@ if __name__ == '__main__':
     #testkTC = TestkTC(values, 6)
     #testkTC.runTests(ast)
 
-    testiTB = TestiTB(values, 1)
-    testiTB.runTests(ast)
+    #testiTB = TestiTB(values, 1)
+    #testiTB.runTests(ast)
+
+    testTDef = TestTDef(values)
+    testTDef.runTests(ast)

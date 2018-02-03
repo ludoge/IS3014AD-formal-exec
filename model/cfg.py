@@ -189,6 +189,43 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, visited) if path != []]
 
 
+def check_var_next_reference(cfg, variable, path):
+    """
+    Check if a variable is referenced in a path before being defined again.
+    """
+    if len(path) <= 1:
+        return False
+    u = path[0]
+    v = path[1]
+    exp, command = cfg[u][v]['booleanexpr'], cfg[u][v]['command']
+    # If variable is referenced in the expression
+    if exp is not None and variable in get_var_from_exp(exp):
+        return True
+    # If variable is assigned to an other variable
+    if command.typename == "Assign" and variable in get_var_from_exp(command.children[1]):
+        return True
+    # If variable is defined again
+    if command.typename == "Assign" and variable == command.children[0].name:
+        return False
+    return check_var_next_reference(cfg, variable, path[1:])
+
+
+def get_assigns_with_next_reference(cfg, path):
+    """
+    Get list of assigns in a path which verify the check_var_next_reference function
+    """
+    if len(path) <= 1:
+        return set()
+    u = path[0]
+    v = path[1]
+    command = cfg[u][v]['command']
+    res = get_assigns_with_next_reference(cfg, path[1:])
+    if command.typename == "Assign":
+        if check_var_next_reference(cfg, command.children[0].name, path[1:]):
+            res.add(u)
+    return res
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
     p1 = ast = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5), Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)),label=1)), label=0)
@@ -209,7 +246,7 @@ if __name__ == '__main__':
     nx.draw_networkx(cfg, pos=pos, arrows=True)
     nx.draw_networkx_edge_labels(cfg, pos=pos, font_size=4)
     plt.axis("off")
-    plt.show()
+    #plt.show()
 
 
     print(cprog)
@@ -222,4 +259,5 @@ if __name__ == '__main__':
     val = {'X': 10, 'Y': 0}
     print(execution_path(cfg, val))
     print(get_paths(cfg, 12))
-    print(get_paths_with_limited_loop(cfg, 1))
+    #print(get_paths_with_limited_loop(cfg, 1))
+
