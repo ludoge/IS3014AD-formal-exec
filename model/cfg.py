@@ -210,6 +210,18 @@ def check_var_next_reference(cfg, variable, path):
     return check_var_next_reference(cfg, variable, path[1:])
 
 
+def get_assigns(cfg):
+    """
+    Returns all labels of assigns in cfg
+    """
+    res = set([])
+    for u in cfg.nodes:
+        for v in cfg.neighbors(u):
+            if cfg[u][v]['command'].typename == "Assign":
+                res.add(cfg[u][v]['command'].label)
+    return res
+
+
 def get_assigns_with_next_reference(cfg, path):
     """
     Get list of assigns in a path which verify the check_var_next_reference function

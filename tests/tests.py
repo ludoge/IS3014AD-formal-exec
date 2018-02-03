@@ -116,7 +116,7 @@ class TestTDef(Test):
     def runTests(self, prog):
         cfg = ast_to_cfg_with_end(prog)
 
-        definitions = get_def(cfg)
+        definitions = get_assigns(cfg)
         covered_definitions = []
 
         for value in self.data:
