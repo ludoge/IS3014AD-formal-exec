@@ -56,8 +56,8 @@ def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg
         # A sequence command does not call for a node
         # We convert the commands and link them up
         temp_edges = copy.deepcopy(previous_edges)
-        for command in list(prog.children)[::-1]:
-            cfg, temp_edges = ast_to_cfg(command, cfg=cfg, previous_edges=temp_edges)
+        for command in list(prog.children):
+            cfg, temp_edges = ast_to_cfg(command, cfg=cfg, previous_edges=copy.deepcopy(temp_edges))
         return cfg, temp_edges
 
 
@@ -207,6 +207,8 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     """
     Finds all paths with at most i loops for each 'While' starting from u recursively
     """
+    nested_loops = find_nested_loops(cfg)
+
     if u == v:
         return [[u]]
 
@@ -214,6 +216,9 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
         visited[u] += 1
     else:
         visited[u] = 1
+
+    for v in nested_loops[u]:  # reset visit counter for nested loops
+        visited[v] = 0
 
     if visited[u] > i + 1:
         return []
@@ -283,7 +288,7 @@ if __name__ == '__main__':
     #print(p1)
     prog = Sequence(p1, p2)
     cprog = copy.deepcopy(prog)
-    prog = Sequence(p2, p1)
+    # prog = Sequence(p2, p1)
     #print(RenderTree(prog))
     #print(prog)
 
