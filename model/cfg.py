@@ -1,3 +1,4 @@
+from collections import defaultdict
 import copy
 import pydot
 from model.booleanexpr import *
@@ -55,7 +56,7 @@ def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg
         # A sequence command does not call for a node
         # We convert the commands and link them up
         temp_edges = copy.deepcopy(previous_edges)
-        for command in list(prog.children):
+        for command in list(prog.children)[::-1]:
             cfg, temp_edges = ast_to_cfg(command, cfg=cfg, previous_edges=temp_edges)
         return cfg, temp_edges
 
@@ -172,6 +173,36 @@ def get_paths(cfg, k, u='START', v='END'):
     return [path for path in get_paths_exact(cfg, k+1, u) if path[-1] == v] + get_paths(cfg, k-1, u, v)
 
 
+def find_nested_loops(cfg):
+    """
+    Finds nested loops. Returns {node : nodes nested within}
+    :param cfg:
+    :return:
+    """
+    result = defaultdict(set)
+    visited = set()
+
+    def _rec_nested_loops(current_node, ancestors):
+        if current_node in visited:
+            return None
+
+        visited.add(current_node)
+
+        if 'command' in cfg.nodes[current_node] and cfg.nodes[current_node]['command'] == "WHILE":
+            for ancestor in ancestors:
+                result[ancestor].add(current_node)
+            successors = list(cfg.successors(current_node))
+
+            _rec_nested_loops(successors[0], ancestors + [current_node])
+            _rec_nested_loops(successors[1], ancestors)
+        else:
+            for v in cfg.successors(current_node):
+                _rec_nested_loops(v, ancestors)
+
+    _rec_nested_loops('START', [])
+    return result
+
+
 def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     """
     Finds all paths with at most i loops for each 'While' starting from u recursively
@@ -240,36 +271,44 @@ def get_assigns_with_next_reference(cfg, path):
 
 if __name__ == '__main__':
     from anytree import RenderTree
-    p1 = ast = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5), Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)),label=1)), label=0)
+
+    p0 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
+               Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(-1)), label=8), label=7)
+    p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(p0, Sequence(
+        Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5),
+        Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1))), label=0)
     p2 = If(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1),label=3), Assign(ArithmVar('Y'), ArithmConst(-1), label=4), label=2)
     #p1 = If(BooleanBinaryExp('<=',ArithmVar('X'),ArithmConst(0)), Assign(ArithmVar('X'),ArithmUnaryExp("-",ArithmVar('X')),label=2), Assign(ArithmVar('X'), ArithmBinExp("-", ArithmConst(1), ArithmVar('X')), label=3), label=1)
     #p2 = If(BooleanBinaryExp('==',ArithmVar('X'),ArithmConst(1)), Assign(ArithmVar('X'),ArithmConst(1),label=5), Assign(ArithmVar('X'), ArithmBinExp("+", ArithmVar('X'), ArithmConst(1)), label=6), label=4)
     #print(p1)
     prog = Sequence(p1, p2)
     cprog = copy.deepcopy(prog)
-    #prog = Sequence(p2, p1)
+    prog = Sequence(p2, p1)
     #print(RenderTree(prog))
     #print(prog)
 
+    # print(RenderTree(cprog))
     cfg = ast_to_cfg_with_end(prog)
+    #print(cfg.nodes)
     #for u,v in cfg.edges:
     #    print(cfg[u][v]['command'].typename)
     pos = nx.nx_pydot.pydot_layout(cfg)
-    nx.draw_networkx(cfg, pos=pos, arrows=True)
+    nx.draw_networkx(cfg, arrows=True)
     nx.draw_networkx_edge_labels(cfg, pos=pos, font_size=4)
     plt.axis("off")
-    #plt.show()
-
-
     print(cprog)
-    print(get_var(cfg))
-    print(get_def(cfg))
-    print(get_ref(cfg))
+    plt.show()
+
+
+
+    # print(get_var(cfg))
+    # print(get_def(cfg))
+    #print(get_ref(cfg))
 
     #for path in nx.all_simple_paths(cfg, source= "START", target="END"):
     #    print(path)
-    val = {'X': 10, 'Y': 0}
-    print(execution_path(cfg, val))
-    print(get_paths(cfg, 12))
+    # val = {'X': 10, 'Y': 0}
+    # print(execution_path(cfg, val))
+    #print(get_paths(cfg, 12))
     #print(get_paths_with_limited_loop(cfg, 1))
-
+    #print(find_nested_loops(cfg))
