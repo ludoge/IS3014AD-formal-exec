@@ -164,13 +164,13 @@ def get_paths_exact(cfg, k, u='START'):
     if k == 0:
         return [[u]]
     paths = [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_exact(cfg, k-1, neighbor)]
-    return  paths
+    return paths
 
 
 def get_paths(cfg, k, u='START', v='END'):
     if k == 0:
         return []
-    return [path for path in get_paths_exact(cfg, k+1, u) if path[-1] == v] + get_paths(cfg, k-1, u, v)
+    return [path for path in get_paths_exact(cfg, k, u) if path[-1] == v] + get_paths(cfg, k - 1, u, v)
 
 
 def find_nested_loops(cfg):
@@ -274,6 +274,67 @@ def get_assigns_with_next_reference(cfg, path):
     return res
 
 
+def check_no_assign_sub_path(cfg, path, variable):
+    """
+    Checks if given sub_path contains no further assignments of variable and one use of the variable at the end
+    :param cfg:
+    :param path:
+    :param variable:
+    :return:
+    """
+    u = path[0]
+    v = path[-1]
+    deff = get_def(cfg.subgraph(list(cfg.successors(u)) + [u]))
+    if deff != {variable}:
+        return False
+
+    ref = get_ref(cfg.subgraph(list(cfg.successors(v)) + [v]))
+    if variable not in ref:
+        return False
+
+    for i in range(1, len(path) - 1):
+        w = path[i]
+        ref = get_ref(cfg.subgraph(list(cfg.successors(w)) + [w]))
+        if variable in ref:
+            return False
+    return True
+
+
+def all_uses(cfg, variable):
+    """
+    Returns all pairs of nodes where variable is assigned at u and not used until v
+    Todo: do this without brute force
+    :param variable:
+    :return:
+    """
+    res = set()
+    for u in cfg.nodes:
+        for v in cfg.nodes:
+            all_simple_paths = get_paths(cfg, len(cfg), u, v)
+            for sp in all_simple_paths:
+                if check_no_assign_sub_path(cfg, sp, variable):
+                    print((u, v))
+                    res.add((u, v))
+                    break
+    return res
+
+
+def sub_paths(path, u, v):
+    """
+    Finds all subpaths in path starting with u and ending with v
+    :param path:
+    :param u:
+    :param v:
+    :return:
+    """
+    res = []
+    for i in range(len(path) - 1):
+        for j in range(i, len(path)):
+            if path[i] == u and path[j] == v:
+                res.append(path[i:j + 1])
+    return res
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
 
@@ -298,11 +359,17 @@ if __name__ == '__main__':
     #for u,v in cfg.edges:
     #    print(cfg[u][v]['command'].typename)
     pos = nx.nx_pydot.pydot_layout(cfg)
-    nx.draw_networkx(cfg, arrows=True)
+    nx.draw_networkx(cfg, pos=pos, arrows=True)
     nx.draw_networkx_edge_labels(cfg, pos=pos, font_size=4)
     plt.axis("off")
     print(cprog)
-    plt.show()
+    # plt.show()
+
+    print(all_uses(cfg, 'X'))
+    # print(check_no_assign_sub_path(cfg, [7, 8], 'X'))
+
+    path = [1, 2, 1, 2, 1, 2]
+    print(sub_paths(path, 1, 2))
 
 
 

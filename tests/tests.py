@@ -22,12 +22,12 @@ class TestTA(Test):
         covered_assignments = []
         for u, v in cfg.edges:
             if cfg[u][v]['command'].typename == "Assign":
-                assignments.append(cfg[u][v]['command'])
+                assignments.append(cfg[u][v]['command'].label)
 
         for value in self.data:
             path = execution_path(cfg, value)
             for a in assignments:
-                if a.label in path:
+                if a in path:
                     print(f"{value} covers assignment {a}")
                     if a not in covered_assignments:
                         covered_assignments.append(a)
@@ -94,6 +94,7 @@ class TestiTB(Test):
 
     def runTests(self, prog):
         cfg = ast_to_cfg_with_end(prog)
+
         i_loops = get_paths_with_limited_loop(cfg, self.i)
         covered_i_loops = []
 
@@ -129,6 +130,38 @@ class TestTDef(Test):
         percent_coverage = 100 * len(covered_definitions) / len(definitions)
         print(f"Test data covers {percent_coverage}% of definitions")
 
+
+class TestTU(Test):
+    def __init__(self, data):
+        super().__init__(data)
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+        variables = get_var(cfg)
+        covered_variables = set()
+        au = defaultdict(set)
+        covered_uses = defaultdict(set)
+        for variable in variables:
+            au[variable].update(all_uses(cfg, variable))
+        for value in self.data:
+            path = execution_path(cfg, value)
+            for variable in variables:
+                for (u, v) in au[variable]:
+                    for sp in sub_paths(path, u, v):
+                        if check_no_assign_sub_path(cfg, sp, variable):
+                            covered_uses[variable].update((u, v))
+                            print(f"Subpath {sp} covers use {u,v} for variable {variable}")
+                if covered_uses[variable] == au[variable]:
+                    print(f"Variable {variable} fully covered")
+                    covered_variables.add(variable)
+
+        percent_coverage = 100 * len(covered_variables) / len(variables)
+        print(f"Test data covers {percent_coverage}% of variables")
+
+
+
+
+
 if __name__ == '__main__':
     from anytree import RenderTree
 
@@ -145,10 +178,9 @@ if __name__ == '__main__':
 
     #print(RenderTree(ast))
     values = [{'X': -1, 'Y': 2},{'X': 0, 'Y': 2},{'X': 1, 'Y': 2}]
-    values = [{'X': x, 'Y': y} for x in range(-10, 10) for y in range(-10, 10)]
 
-    testTA = TestTA(values)
-    testTA.runTests(ast)
+    # testTA = TestTA(values)
+    # testTA.runTests(ast)
 
     #testTD = TestTD(values)
     #testTD.runTests(ast)
@@ -156,13 +188,11 @@ if __name__ == '__main__':
     #testkTC = TestkTC(values, 6)
     #testkTC.runTests(ast)
 
-<<<<<<< HEAD
-    #testiTB = TestiTB(values, 6)
-    #testiTB.runTests(ast)
-=======
     #testiTB = TestiTB(values, 1)
     #testiTB.runTests(ast)
 
-    testTDef = TestTDef(values)
-    testTDef.runTests(ast)
->>>>>>> 9d56b226b628d90e1e535f456631d8c7b1cb9f8c
+    # testTDef = TestTDef(values)
+    # testTDef.runTests(ast)
+
+    testTU = TestTU(values)
+    testTU.runTests(ast)
