@@ -313,7 +313,7 @@ def all_uses(cfg, variable):
             all_simple_paths = get_paths(cfg, len(cfg), u, v)
             for sp in all_simple_paths:
                 if check_no_assign_sub_path(cfg, sp, variable):
-                    print((u, v))
+                    #print((u, v))
                     res.add((u, v))
                     break
     return res

@@ -159,6 +159,35 @@ class TestTU(Test):
         print(f"Test data covers {percent_coverage}% of variables")
 
 
+class TestDU(Test):
+    def __init__(self, data):
+        super().__init__(data)
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+        variables = get_var(cfg)
+        simple_path_pairs = set()
+        simple_paths = []
+        for variable in variables:
+            simple_path_pairs.update(all_uses(cfg, variable))
+        for (u, v) in simple_path_pairs:
+            for path in get_paths_with_limited_loop(cfg, 1, u, v):
+                if path not in simple_paths:
+                    simple_paths.append(path)
+
+        covered_simple_paths = []
+        for value in self.data:
+            path = execution_path(cfg, value)
+            for (u, v) in simple_path_pairs:
+                for sp in sub_paths(path, u, v):
+                    if sp in simple_paths:
+                        print(f"Subpath {sp} is covered")
+                        if sp not in covered_simple_paths:
+                            covered_simple_paths.append(sp)
+
+        percent_coverage = 100 * len(covered_simple_paths) / len(simple_paths)
+        print(f"Test data covers {percent_coverage}% of paths")
+
 
 
 
@@ -194,5 +223,8 @@ if __name__ == '__main__':
     # testTDef = TestTDef(values)
     # testTDef.runTests(ast)
 
-    testTU = TestTU(values)
-    testTU.runTests(ast)
+    #testTU = TestTU(values)
+    #testTU.runTests(ast)
+
+    testDU = TestDU(values)
+    testDU.runTests(ast)
