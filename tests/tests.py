@@ -189,6 +189,23 @@ class TestDU(Test):
         print(f"Test data covers {percent_coverage}% of paths")
 
 
+class TestTC(Test):
+    def __init__(self, data):
+        super().__init__(data)
+
+    def runTests(self, prog):
+        cfg = ast_to_cfg_with_end(prog)
+        conditions = get_all_conditions(cfg)
+        all_conditions = [(label, cond_expr, value) for label in conditions for cond_expr in conditions[label] for value in [True, False]]
+        covered_conditions = []
+        for value in self.data:
+            for cond in get_conditions_values(cfg, value, conditions):
+                print(f"Condition {cond[1]} is evaluated to {cond[2]} at label {cond[0]}")
+                if cond not in covered_conditions and cond in all_conditions:
+                    covered_conditions.append(cond)
+
+        percent_coverage = 100 * len(covered_conditions) / len(all_conditions)
+        print(f"Test data covers {percent_coverage}% of paths")
 
 
 if __name__ == '__main__':
@@ -226,5 +243,8 @@ if __name__ == '__main__':
     #testTU = TestTU(values)
     #testTU.runTests(ast)
 
-    testDU = TestDU(values)
-    testDU.runTests(ast)
+    #testDU = TestDU(values)
+    #testDU.runTests(ast)
+
+    testTC = TestTC(values)
+    testTC.runTests(ast)

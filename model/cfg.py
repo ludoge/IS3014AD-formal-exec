@@ -7,8 +7,6 @@ from model.command import *
 import matplotlib.pyplot as plt
 import networkx as nx
 
-
-
 def ast_to_cfg(prog, previous_edges={("START", BooleanConst(True), Skip())}, cfg=nx.DiGraph()):
     """
     Takes a program as a tree and generates its control flow graph recursively
@@ -335,10 +333,65 @@ def sub_paths(path, u, v):
     return res
 
 
+def get_conditions_from_expression(expr):
+    cond = set([])
+    if expr.typename == "BooleanConst":
+        return cond
+    elif expr.typename == "BooleanVar":
+        cond.add(copy.deepcopy(expr))
+    elif expr.typename == "BooleanBinaryExp" and expr.operator in ['==', '!=', '<', '>', '<=', '>=']:
+        cond.add(copy.deepcopy(expr))
+    else:
+        for e in list(expr.children):
+                cond.update(get_conditions_from_expression(e))
+    return cond
+
+
+def get_all_conditions(cfg):
+    """
+    Return all boolean condition with their label in cfg
+    """
+    cond = {}
+    for u in cfg.nodes:
+        neighbors = list(cfg.neighbors(u))
+        if len(neighbors) == 2:
+            cond[u] = list(get_conditions_from_expression(cfg[u][neighbors[0]]['booleanexpr']))
+    return cond
+
+
+def get_conditions_values(cfg, values, conditions):
+    """
+    Get values taken for each condition for this execution
+    """
+    current_node = 'START'
+    conditions_values = []
+    while current_node != "END":
+        neighbors = list(cfg.neighbors(current_node))
+        # First to choose next node
+        if len(neighbors)==1:
+            next_node = neighbors[0]
+        elif len(neighbors)==2:
+            if_node, else_node = neighbors[0], neighbors[1]
+            condition = cfg.edges[current_node, if_node]['booleanexpr']
+            if condition.eval(values):
+                next_node = if_node
+            else:
+                next_node = else_node
+            # We check the value of every condition
+            if current_node in conditions:
+                for cond_expr in conditions[current_node]:
+                    cond_value = cond_expr.eval(values)
+                    if (current_node, cond_expr, cond_value) not in conditions_values:
+                        conditions_values.append((current_node, cond_expr, cond_value))
+        #  Now we execute and move on
+        values = cfg.edges[current_node, next_node]['command'].exec(values=values)
+        current_node = next_node
+    return conditions_values
+
 if __name__ == '__main__':
     from anytree import RenderTree
 
-    p0 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
+    p0 = While(BooleanBinaryExp('&&',BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),BooleanBinaryExp('!=', ArithmVar('X'), ArithmConst(10))),
                Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(-1)), label=8), label=7)
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Sequence(p0, Sequence(
         Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5),
@@ -384,3 +437,8 @@ if __name__ == '__main__':
     #print(get_paths(cfg, 12))
     #print(get_paths_with_limited_loop(cfg, 1))
     #print(find_nested_loops(cfg))
+
+    val = {'X': 10, 'Y': 0}
+    conditions = get_all_conditions(cfg)
+    print(conditions)
+    print(get_conditions_values(cfg, val, conditions))
