@@ -5,7 +5,7 @@ from model.cfg import *
 
 class TestGenerator:
     def __init__(self, prog):
-        self.cfg = ast_to_cfg_with_end(prog)
+        self.cfg = ast_to_cfg_with_end(copy.deepcopy(prog))
 
     def findPaths(self):
         return {}
@@ -49,16 +49,42 @@ class TestTAGenerator(TestGenerator):
         return paths
 
 
+class TestTDGenerator(TestGenerator):
+    def __init__(self, prog, max_loop=2):
+        super().__init__(prog)
+        self.max_loop = max_loop
+
+    def findPaths(self):
+        decision_labels = get_all_conditions(self.cfg).keys()
+        paths = {}
+        for label in decision_labels:
+            neighbors = list(self.cfg.neighbors(label))
+            paths[f'<Decision {label} True>'] = []
+            for path in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', neighbors[0]):
+                paths[f'<Decision {label} True>'].append(path)
+            paths[f'<Decision {label} False>'] = []
+            for path in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', neighbors[1]):
+                paths[f'<Decision {label} False>'].append(path)
+        return paths
+
+
 
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
-
                Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
                label=0)
     p2 = If(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1), label=3),
             Assign(ArithmVar('Y'), ArithmConst(-1), label=4), label=2)
 
     ast = Sequence(p1, p2)
+
+    p3 = While(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)),
+               Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
+               label=0)
+    p4 = If(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1), label=3),
+            Assign(ArithmVar('Y'), ArithmConst(-1), label=4), label=2)
+
+    wrong_ast = Sequence(p3, p4)
 
     """
     cfg = ast_to_cfg_with_end(ast)
@@ -79,5 +105,24 @@ if __name__ == '__main__':
     print(ps.problem.getSolutions())
     """
 
-    test_generator = TestTAGenerator(ast, 2)
+    print(ast)
+
+    print("\n\nTest TA\n")
+
+    print("Solution program 1")
+    test_generator = TestTAGenerator(ast)
+    print(test_generator.findTests())
+
+    print("Solution program 2")
+    test_generator = TestTAGenerator(wrong_ast)
+    print(test_generator.findTests())
+
+    print("\n\nTest TD\n")
+
+    print("Solution program 1")
+    test_generator = TestTDGenerator(ast)
+    print(test_generator.findTests())
+
+    print("Solution program 2")
+    test_generator = TestTDGenerator(wrong_ast)
     print(test_generator.findTests())
