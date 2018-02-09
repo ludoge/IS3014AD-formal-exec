@@ -1,6 +1,7 @@
 from path_to_predicate import *
 from predicate_solve import *
 from model.cfg import *
+from tests.tests import *
 
 
 class TestGenerator:
@@ -68,6 +69,31 @@ class TestTDGenerator(TestGenerator):
         return paths
 
 
+class TestkTCGenerator(TestGenerator):
+    def __init__(self, prog, k):
+        super().__init__(prog)
+        self.k = k
+
+    def findPaths(self):
+        all_k_paths = get_paths(self.cfg, self.k)
+        paths = {}
+        for i in range(len(all_k_paths)):
+            paths[f'<{self.k}-path n° {i}>'] = [all_k_paths[i]]
+        return paths
+
+
+class TestiTBGenerator(TestGenerator):
+    def __init__(self, prog, i):
+        super().__init__(prog)
+        self.i = i
+
+    def findPaths(self):
+        all_i_loops = get_paths_with_limited_loop(self.cfg, self.i)
+        paths = {}
+        for i in range(len(all_i_loops)):
+            paths[f'<{self.i}-loop path n° {i}>'] = [all_i_loops[i]]
+        return paths
+
 
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
@@ -107,22 +133,60 @@ if __name__ == '__main__':
 
     print(ast)
 
+
     print("\n\nTest TA\n")
 
     print("Solution program 1")
     test_generator = TestTAGenerator(ast)
-    print(test_generator.findTests())
+    solutionTA = test_generator.findTests()
+    print(solutionTA)
 
     print("Solution program 2")
     test_generator = TestTAGenerator(wrong_ast)
     print(test_generator.findTests())
 
+
     print("\n\nTest TD\n")
 
     print("Solution program 1")
     test_generator = TestTDGenerator(ast)
-    print(test_generator.findTests())
+    solutionTD = test_generator.findTests()
+    print(solutionTD)
 
     print("Solution program 2")
     test_generator = TestTDGenerator(wrong_ast)
     print(test_generator.findTests())
+
+
+    print("\n\nTest k-TC\n")
+
+    print("Solution program 1")
+    test_generator = TestkTCGenerator(ast, 6)
+    solutionkTC = test_generator.findTests()
+    print(solutionkTC)
+
+    print("Solution program 2")
+    test_generator = TestkTCGenerator(wrong_ast, 6)
+    print(test_generator.findTests())
+
+
+    print("\n\nTest i-TB\n")
+
+    print("Solution program 1")
+    test_generator = TestiTBGenerator(ast, 2)
+    solutioniTB = test_generator.findTests()
+    print(solutioniTB)
+
+    print("Solution program 2")
+    test_generator = TestiTBGenerator(wrong_ast, 2)
+    print(test_generator.findTests())
+
+
+    print("\n\nVerify all tests\n")
+    TestTA(solutionTA).runTests(copy.deepcopy(ast))
+    print()
+    TestTD(solutionTD).runTests(copy.deepcopy(ast))
+    print()
+    TestkTC(solutionkTC, 6).runTests(copy.deepcopy(ast))
+    print()
+    TestiTB(solutioniTB, 2).runTests(copy.deepcopy(ast))
