@@ -171,55 +171,34 @@ def get_paths(cfg, k, u='START', v='END'):
     return [path for path in get_paths_exact(cfg, k, u) if path[-1] == v] + get_paths(cfg, k - 1, u, v)
 
 
-def find_nested_loops(cfg):
-    """
-    Finds nested loops. Returns {node : nodes nested within}
-    :param cfg:
-    :return:
-    """
-    result = defaultdict(set)
-    visited = set()
-
-    def _rec_nested_loops(current_node, ancestors):
-        if current_node in visited:
-            return None
-
-        visited.add(current_node)
-
-        if 'command' in cfg.nodes[current_node] and cfg.nodes[current_node]['command'] == "WHILE":
-            for ancestor in ancestors:
-                result[ancestor].add(current_node)
-            successors = list(cfg.successors(current_node))
-
-            _rec_nested_loops(successors[0], ancestors + [current_node])
-            _rec_nested_loops(successors[1], ancestors)
-        else:
-            for v in cfg.successors(current_node):
-                _rec_nested_loops(v, ancestors)
-
-    _rec_nested_loops('START', [])
-    return result
-
-
 def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     """
     Finds all paths with at most i loops for each 'While' starting from u recursively
     """
-    nested_loops = find_nested_loops(cfg)
 
     if u == v:
         return [[u]]
 
-    if u in visited:
-        visited[u] += 1
-    else:
-        visited[u] = 1
-
-    for v in nested_loops[u]:  # reset visit counter for nested loops
-        visited[v] = 0
-
-    if visited[u] > i + 1:
+    if u in visited and visited[u] > i:
         return []
+
+    res = []
+    # Case of a WHILE (or an IF) loop, meaning that we increment counter if we stay in the loop, and erase if when exiting
+    neighbors = list(cfg.neighbors(u))
+    if len(neighbors) == 2:
+        # Stay in the loop
+        new_visited = copy.deepcopy(visited)
+        if u in new_visited:
+            new_visited[u] += 1
+        else:
+            new_visited[u] = 1
+        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[0], v, new_visited) if path != []]
+        # Exit the loop
+        new_visited = copy.deepcopy(visited)
+        new_visited[u] = 0
+        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[1], v, new_visited) if path != []]
+        return res
+
     return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, visited) if path != []]
 
 
