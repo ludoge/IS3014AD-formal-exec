@@ -18,7 +18,7 @@ class PredicateSolver(object):
         for i in range(len(L)):
             expr = expr.replace(L[i], f'args[{i}]')
         expr = expr.replace("!", 'not')
-        print(expr)
+        #print(expr)
 
         def func(*args):
             return eval(expr)

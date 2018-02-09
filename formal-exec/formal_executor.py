@@ -17,6 +17,7 @@ class TestGenerator:
         """
         tests = []
         for cover_name, possible_path in self.findPaths().items():
+            solution_found = False
             for path in possible_path:
                 vars, constraints = path_predicate(self.cfg, path)
                 vars = {k for k, v in vars.items()}
@@ -25,9 +26,11 @@ class TestGenerator:
                 solutions = ps.problem.getSolutions()
                 if len(solutions) > 0:
                     tests.append(solutions[0])
+                    solution_found = True
                     break
-            print(f'No solution found for any path given for coverage condition {cover_name}')
-            return None
+            if not solution_found:
+                print(f'No solution found for any path given for coverage condition {cover_name}')
+                return None
         return tests
 
 
@@ -43,9 +46,6 @@ class TestTAGenerator(TestGenerator):
             paths[f'<Assign {label}>'] = []
             for path in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', label):
                 paths[f'<Assign {label}>'].append(path)
-                print(path)
-            print(f'<Assign {label}>')
-            print(len(paths[f'<Assign {label}>']))
         return paths
 
 
