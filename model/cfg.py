@@ -171,7 +171,7 @@ def get_paths(cfg, k, u='START', v='END'):
     return [path for path in get_paths_exact(cfg, k, u) if path[-1] == v] + get_paths(cfg, k - 1, u, v)
 
 
-def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
+def get_paths_with_limited_loop(cfg, i, u='START', v='END', current_loops={}):
     """
     Finds all paths with at most i loops for each 'While' starting from u recursively
     """
@@ -179,7 +179,7 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     if u == v:
         return [[u]]
 
-    if u in visited and visited[u] > i:
+    if u in current_loops and current_loops[u][0] > i:
         return []
 
     res = []
@@ -187,19 +187,23 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', visited={}):
     neighbors = list(cfg.neighbors(u))
     if len(neighbors) == 2:
         # Stay in the loop
-        new_visited = copy.deepcopy(visited)
-        if u in new_visited:
-            new_visited[u] += 1
+        new_current_loops = copy.deepcopy(current_loops)
+        if u in new_current_loops:
+            new_current_loops[u][0] += 1
         else:
-            new_visited[u] = 1
-        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[0], v, new_visited) if path != []]
+            new_current_loops[u] = [1, list(current_loops.keys())]
+        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[0], v, new_current_loops) if path != []]
         # Exit the loop
-        new_visited = copy.deepcopy(visited)
-        new_visited[u] = 0
-        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[1], v, new_visited) if path != []]
+        new_current_loops = copy.deepcopy(current_loops)
+        if u in new_current_loops:
+            del new_current_loops[u]  # Remove this loop
+        for sub_u in new_current_loops.keys():  # Remove all sub-loops
+            if u in new_current_loops[sub_u][1]:
+                del new_current_loops[sub_u]
+        res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[1], v, new_current_loops) if path != []]
         return res
 
-    return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, visited) if path != []]
+    return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, current_loops) if path != []]
 
 
 def check_var_next_reference(cfg, variable, path):
