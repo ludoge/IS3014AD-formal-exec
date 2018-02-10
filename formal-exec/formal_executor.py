@@ -6,7 +6,9 @@ from tests.tests import *
 
 class TestGenerator:
     def __init__(self, prog):
+        self.prog = prog
         self.cfg = ast_to_cfg_with_end(copy.deepcopy(prog))
+        self.test = Test([])
 
     def findPaths(self):
         return {}
@@ -37,11 +39,34 @@ class TestGenerator:
                 full_test = False
         return tests, full_test
 
+    def findReducedTests(self):
+        test_valuation, is_full_test = self.findTests()
+        self.test.data = copy.deepcopy(test_valuation)
+        max_score = self.test.runTests(copy.deepcopy(self.prog))
+        current_score = 0
+        minimum_test = []
+        remaining_valuations = copy.deepcopy(test_valuation)
+        while current_score < max_score:
+            best_valuation = None
+            best_score = 0
+            for valuation in remaining_valuations:
+                self.test.data = copy.deepcopy(minimum_test) + [copy.deepcopy(valuation)]
+                score = self.test.runTests(copy.deepcopy(self.prog))
+                if score > best_score:
+                    best_score = score
+                    best_valuation = copy.deepcopy(valuation)
+            minimum_test.append(best_valuation)
+            remaining_valuations = [valuation for valuation in remaining_valuations if valuation != best_valuation]
+            current_score = best_score
+        print(f"Test found for a coverage of {int(current_score*100)/100}%")
+        return minimum_test
+
 
 class TestTAGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestTA([])
 
     def findPaths(self):
         assign_labels = get_assigns(self.cfg)
@@ -57,6 +82,7 @@ class TestTDGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestTD([])
 
     def findPaths(self):
         decision_labels = get_all_conditions(self.cfg).keys()
@@ -76,6 +102,7 @@ class TestkTCGenerator(TestGenerator):
     def __init__(self, prog, k):
         super().__init__(prog)
         self.k = k
+        self.test = TestkTC([], k)
 
     def findPaths(self):
         all_k_paths = get_paths(self.cfg, self.k)
@@ -89,6 +116,7 @@ class TestiTBGenerator(TestGenerator):
     def __init__(self, prog, i):
         super().__init__(prog)
         self.i = i
+        self.test = TestiTB([], i)
 
     def findPaths(self):
         all_i_loops = get_paths_with_limited_loop(self.cfg, self.i)
@@ -102,6 +130,7 @@ class TestTDefGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestTDef([])
 
     def findPaths(self):
         var_list = get_var(self.cfg)
@@ -139,6 +168,7 @@ class TestTUGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestTU([])
 
     def findPaths(self):
         var_list = get_var(self.cfg)
@@ -157,6 +187,7 @@ class TestDUGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestDU([])
 
     def findPaths(self):
         var_list = get_var(self.cfg)
@@ -181,6 +212,7 @@ class TestTCGenerator(TestGenerator):
     def __init__(self, prog, max_loop=2):
         super().__init__(prog)
         self.max_loop = max_loop
+        self.test = TestTC([])
         self.conditions = {}
 
     def findPaths(self):
@@ -221,6 +253,7 @@ class TestTCGenerator(TestGenerator):
                         full_test = False
 
         return tests, full_test
+
 
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
@@ -264,134 +297,100 @@ if __name__ == '__main__':
 
     print("Solution program 1")
     test_generator = TestTAGenerator(ast)
-    solutionTA, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionTA)
+    solutionTA = test_generator.findReducedTests()
+    print(solutionTA)
 
     print("Solution program 2")
     test_generator = TestTAGenerator(wrong_ast)
-    wrongSolutionTA, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionTA)
+    wrongSolutionTA = test_generator.findReducedTests()
+    print(wrongSolutionTA)
 
 
     print("\n\nTest TD\n")
 
     print("Solution program 1")
     test_generator = TestTDGenerator(ast)
-    solutionTD, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionTD)
+    solutionTD = test_generator.findReducedTests()
+    print(solutionTD)
 
     print("Solution program 2")
     test_generator = TestTDGenerator(wrong_ast)
-    wrongSolutionTD, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionTD)
+    wrongSolutionTD = test_generator.findReducedTests()
+    print(wrongSolutionTD)
 
 
     print("\n\nTest k-TC\n")
 
     print("Solution program 1")
     test_generator = TestkTCGenerator(ast, 6)
-    solutionkTC, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionkTC)
+    solutionkTC = test_generator.findReducedTests()
+    print(solutionkTC)
 
     print("Solution program 2")
     test_generator = TestkTCGenerator(wrong_ast, 6)
-    wrongSolutionkTC, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionkTC)
+    wrongSolutionkTC = test_generator.findReducedTests()
+    print(wrongSolutionkTC)
 
 
     print("\n\nTest i-TB\n")
 
     print("Solution program 1")
     test_generator = TestiTBGenerator(ast, 2)
-    solutioniTB, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutioniTB)
+    solutioniTB = test_generator.findReducedTests()
+    print(solutioniTB)
 
     print("Solution program 2")
     test_generator = TestiTBGenerator(wrong_ast, 2)
-    wrongSolutioniTB, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutioniTB)
+    wrongSolutioniTB = test_generator.findReducedTests()
+    print(wrongSolutioniTB)
 
 
     print("\n\nTest TDef\n")
 
     print("Solution program 1")
     test_generator = TestTDefGenerator(ast)
-    solutionTDef, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionTDef)
+    solutionTDef = test_generator.findReducedTests()
+    print(solutionTDef)
 
     print("Solution program 2")
     test_generator = TestTDefGenerator(wrong_ast)
-    wrongSolutionTDef, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionTDef)
+    wrongSolutionTDef = test_generator.findReducedTests()
+    print(wrongSolutionTDef)
 
 
     print("\n\nTest TU\n")
 
     print("Solution program 1")
     test_generator = TestTUGenerator(ast)
-    solutionTU, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionTU)
+    solutionTU = test_generator.findReducedTests()
+    print(solutionTU)
 
     print("Solution program 2")
     test_generator = TestTUGenerator(wrong_ast)
-    wrongSolutionTU, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionTU)
+    wrongSolutionTU = test_generator.findReducedTests()
+    print(wrongSolutionTU)
 
 
     print("\n\nTest DU\n")
 
     print("Solution program 1")
     test_generator = TestDUGenerator(ast)
-    solutionDU, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionDU)
+    solutionDU = test_generator.findReducedTests()
+    print(solutionDU)
 
     print("Solution program 2")
     test_generator = TestDUGenerator(wrong_ast)
-    wrongSolutionDU, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionDU)
+    wrongSolutionDU = test_generator.findReducedTests()
+    print(wrongSolutionDU)
 
     print("\n\nTest TC\n")
 
     print("Solution program 1")
     test_generator = TestTCGenerator(ast)
-    solutionTC, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(solutionTC)
+    solutionTC = test_generator.findReducedTests()
+    print(solutionTC)
 
     print("Solution program 2")
     test_generator = TestTCGenerator(wrong_ast)
-    wrongSolutionTC, is_full_test = test_generator.findTests()
-    if is_full_test:
-        print(wrongSolutionTC)
-
-
-    print("\n\nVerify all tests\n")
-    TestTA(solutionTA).runTests(copy.deepcopy(ast))
-    print()
-    TestTD(solutionTD).runTests(copy.deepcopy(ast))
-    print()
-    TestkTC(solutionkTC, 6).runTests(copy.deepcopy(ast))
-    print()
-    TestiTB(solutioniTB, 2).runTests(copy.deepcopy(ast))
-    print()
-    TestTDef(solutionTDef).runTests(copy.deepcopy(ast))
-    print()
-    TestTU(solutionTU).runTests(copy.deepcopy(ast))
-    print()
-    TestDU(solutionDU).runTests(copy.deepcopy(ast))
-    print()
-    TestDU(solutionTC).runTests(copy.deepcopy(ast))
+    wrongSolutionTC = test_generator.findReducedTests()
+    print(wrongSolutionTC)

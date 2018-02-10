@@ -33,7 +33,8 @@ class TestTA(Test):
                         covered_assignments.append(a)
 
         percent_coverage = 100*len(covered_assignments)/len(assignments)
-        print(f"Test data covers {percent_coverage}% of assignments")
+        #print(f"Test data covers {percent_coverage}% of assignments")
+        return percent_coverage
 
 
 class TestTD(Test):
@@ -62,7 +63,8 @@ class TestTD(Test):
                         covered_decisions.append(d)
 
         percent_coverage = 100*len(covered_decisions)/len(decisions)
-        print(f"Test data covers {percent_coverage}% of decisions")
+        #print(f"Test data covers {percent_coverage}% of decisions")
+        return percent_coverage
 
 
 class TestkTC(Test):
@@ -84,7 +86,8 @@ class TestkTC(Test):
                     covered_k_paths.append(path)
 
         percent_coverage = 100*len(covered_k_paths)/len(k_paths)
-        print(f"Test data covers {percent_coverage}% of {self.k}-paths")
+        #print(f"Test data covers {percent_coverage}% of {self.k}-paths")
+        return percent_coverage
 
 
 class TestiTB(Test):
@@ -106,7 +109,8 @@ class TestiTB(Test):
                     covered_i_loops.append(path)
 
         percent_coverage = 100*len(covered_i_loops)/len(i_loops)
-        print(f"Test data covers {percent_coverage}% of {self.i}-loops")
+        #print(f"Test data covers {percent_coverage}% of {self.i}-loops")
+        return percent_coverage
 
 
 class TestTDef(Test):
@@ -128,7 +132,8 @@ class TestTDef(Test):
                     covered_definitions.append(a)
 
         percent_coverage = 100 * len(covered_definitions) / len(definitions)
-        print(f"Test data covers {percent_coverage}% of definitions")
+        #print(f"Test data covers {percent_coverage}% of definitions")
+        return percent_coverage
 
 
 class TestTU(Test):
@@ -153,7 +158,8 @@ class TestTU(Test):
                             covered_pairs.update((u, v))
                             #print(f"Subpath {sp} covers use {u,v}")
         percent_coverage = 100 * len(covered_pairs) / len(pairs)
-        print(f"Test data covers {percent_coverage}% of variables")
+        #print(f"Test data covers {percent_coverage}% of variables")
+        return percent_coverage
 
 
 class TestDU(Test):
@@ -183,7 +189,8 @@ class TestDU(Test):
                             covered_simple_paths.append(sp)
 
         percent_coverage = 100 * len(covered_simple_paths) / len(simple_paths)
-        print(f"Test data covers {percent_coverage}% of paths")
+        #print(f"Test data covers {percent_coverage}% of paths")
+        return percent_coverage
 
 
 class TestTC(Test):
@@ -202,7 +209,8 @@ class TestTC(Test):
                     covered_conditions.append(cond)
 
         percent_coverage = 100 * len(covered_conditions) / len(all_conditions)
-        print(f"Test data covers {percent_coverage}% of paths")
+        #print(f"Test data covers {percent_coverage}% of paths")
+        return percent_coverage
 
 
 if __name__ == '__main__':
