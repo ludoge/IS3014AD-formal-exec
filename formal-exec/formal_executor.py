@@ -177,6 +177,50 @@ class TestDUGenerator(TestGenerator):
         return paths
 
 
+class TestTCGenerator(TestGenerator):
+    def __init__(self, prog, max_loop=2):
+        super().__init__(prog)
+        self.max_loop = max_loop
+        self.conditions = {}
+
+    def findPaths(self):
+        self.conditions = get_all_conditions(self.cfg)
+        paths = {}
+        for label in self.conditions.keys():
+            paths[f'<Conditions {label}>'] = get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', label)
+        return paths
+
+    def findTests(self, paths=None):
+        tests = []
+        full_test = True
+        if paths is None:
+            paths = self.findPaths()
+        for label in self.conditions:
+            for condition in self.conditions[label]:
+                for cond_value in [True, False]:
+                    condition_string = str(condition)
+                    if not cond_value:
+                        condition_string = str(BooleanUnaryExp("!", condition))
+                    solution_found = False
+                    for path in paths[f'<Conditions {label}>']:
+                        vars, constraints = path_predicate(self.cfg, path)
+                        new_condition_string = condition_string
+                        for var in vars:
+                            new_condition_string = new_condition_string.replace(var, vars[var])
+                        constraints.add(new_condition_string)
+                        vars = {k for k, v in vars.items()}
+                        ps = PredicateSolver(vars, constraints)
+                        ps.add_constraints()
+                        solutions = ps.problem.getSolutions()
+                        if len(solutions) > 0:
+                            tests.append(solutions[0])
+                            solution_found = True
+                            break
+                    if not solution_found:
+                        print(f'WARNING: No solution found for any path given for coverage condition <Label {label} Condition {condition} Value {cond_value}>')
+                        full_test = False
+
+        return tests, full_test
 
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
@@ -215,7 +259,6 @@ if __name__ == '__main__':
     """
 
     print(ast)
-
 
     print("\n\nTest TA\n")
 
@@ -321,6 +364,20 @@ if __name__ == '__main__':
     if is_full_test:
         print(wrongSolutionDU)
 
+    print("\n\nTest TC\n")
+
+    print("Solution program 1")
+    test_generator = TestTCGenerator(ast)
+    solutionTC, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionTC)
+
+    print("Solution program 2")
+    test_generator = TestTCGenerator(wrong_ast)
+    wrongSolutionTC, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionTC)
+
 
     print("\n\nVerify all tests\n")
     TestTA(solutionTA).runTests(copy.deepcopy(ast))
@@ -336,3 +393,5 @@ if __name__ == '__main__':
     TestTU(solutionTU).runTests(copy.deepcopy(ast))
     print()
     TestDU(solutionDU).runTests(copy.deepcopy(ast))
+    print()
+    TestDU(solutionTC).runTests(copy.deepcopy(ast))
