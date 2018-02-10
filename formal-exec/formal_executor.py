@@ -135,7 +135,22 @@ class TestTDefGenerator(TestGenerator):
         return test, is_full_test and full_test
 
 
+class TestTUGenerator(TestGenerator):
+    def __init__(self, prog, max_loop=2):
+        super().__init__(prog)
+        self.max_loop = max_loop
 
+    def findPaths(self):
+        var_list = get_var(self.cfg)
+        paths = {}
+        for variable in var_list:
+            pairs = all_uses(self.cfg, variable)
+            for pair in pairs:
+                paths[f'<Ref {pair[1]} for Ref {pair[0]}>'] = []
+                for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', pair[0]):
+                    for path2 in get_paths_with_limited_loop(self.cfg, self.max_loop, pair[0], pair[1]):
+                        paths[f'<Ref {pair[1]} for Ref {pair[0]}>'].append(path1 + path2[1:])
+        return paths
 
 
 
@@ -254,6 +269,21 @@ if __name__ == '__main__':
         print(wrongSolutionTDef)
 
 
+    print("\n\nTest TU\n")
+
+    print("Solution program 1")
+    test_generator = TestTUGenerator(ast)
+    solutionTU, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionTU)
+
+    print("Solution program 2")
+    test_generator = TestTUGenerator(wrong_ast)
+    wrongSolutionTU, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionTU)
+
+
     print("\n\nVerify all tests\n")
     TestTA(solutionTA).runTests(copy.deepcopy(ast))
     print()
@@ -264,3 +294,5 @@ if __name__ == '__main__':
     TestiTB(solutioniTB, 2).runTests(copy.deepcopy(ast))
     print()
     TestTDef(solutionTDef).runTests(copy.deepcopy(ast))
+    print()
+    TestTU(solutionTU).runTests(copy.deepcopy(ast))

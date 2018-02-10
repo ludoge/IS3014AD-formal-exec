@@ -28,7 +28,7 @@ class TestTA(Test):
             path = execution_path(cfg, value)
             for a in assignments:
                 if a in path:
-                    print(f"{value} covers assignment {a}")
+                    #print(f"{value} covers assignment {a}")
                     if a not in covered_assignments:
                         covered_assignments.append(a)
 
@@ -57,7 +57,7 @@ class TestTD(Test):
             path_edges = [(path[i], path[i+1]) for i in range(len(path)-1)]
             for d in decisions:
                 if d in path_edges:
-                    print(f"{value} covers decision {d}")
+                    #print(f"{value} covers decision {d}")
                     if d not in covered_decisions:
                         covered_decisions.append(d)
 
@@ -79,7 +79,7 @@ class TestkTC(Test):
         for value in self.data:
             path = execution_path(cfg, value)
             if path in k_paths:
-                print(f"{value} covers {self.k}-path {path}")
+                #print(f"{value} covers {self.k}-path {path}")
                 if path not in covered_k_paths:
                     covered_k_paths.append(path)
 
@@ -101,7 +101,7 @@ class TestiTB(Test):
         for value in self.data:
             path = execution_path(cfg, value)
             if path in i_loops:
-                print(f"{value} covers {self.i}-loops {path}")
+                #print(f"{value} covers {self.i}-loops {path}")
                 if path not in covered_i_loops:
                     covered_i_loops.append(path)
 
@@ -123,7 +123,7 @@ class TestTDef(Test):
             path = execution_path(cfg, value)
             covered_definitions_in_path = get_assigns_with_next_reference(cfg, path)
             for a in covered_definitions_in_path:
-                print(f"{value} covers definition {a}")
+                #print(f"{value} covers definition {a}")
                 if a not in covered_definitions:
                     covered_definitions.append(a)
 
@@ -138,24 +138,21 @@ class TestTU(Test):
     def runTests(self, prog):
         cfg = ast_to_cfg_with_end(prog)
         variables = get_var(cfg)
-        covered_variables = set()
+        pairs = set()
+        covered_pairs = set()
         au = defaultdict(set)
-        covered_uses = defaultdict(set)
         for variable in variables:
             au[variable].update(all_uses(cfg, variable))
+            pairs.update(au[variable])
         for value in self.data:
             path = execution_path(cfg, value)
             for variable in variables:
                 for (u, v) in au[variable]:
                     for sp in sub_paths(path, u, v):
                         if check_no_assign_sub_path(cfg, sp, variable):
-                            covered_uses[variable].update((u, v))
-                            print(f"Subpath {sp} covers use {u,v} for variable {variable}")
-                if covered_uses[variable] == au[variable]:
-                    print(f"Variable {variable} fully covered")
-                    covered_variables.add(variable)
-
-        percent_coverage = 100 * len(covered_variables) / len(variables)
+                            covered_pairs.update((u, v))
+                            #print(f"Subpath {sp} covers use {u,v}")
+        percent_coverage = 100 * len(covered_pairs) / len(pairs)
         print(f"Test data covers {percent_coverage}% of variables")
 
 
@@ -181,7 +178,7 @@ class TestDU(Test):
             for (u, v) in simple_path_pairs:
                 for sp in sub_paths(path, u, v):
                     if sp in simple_paths:
-                        print(f"Subpath {sp} is covered")
+                        #print(f"Subpath {sp} is covered")
                         if sp not in covered_simple_paths:
                             covered_simple_paths.append(sp)
 
@@ -200,7 +197,7 @@ class TestTC(Test):
         covered_conditions = []
         for value in self.data:
             for cond in get_conditions_values(cfg, value, conditions):
-                print(f"Condition {cond[1]} is evaluated to {cond[2]} at label {cond[0]}")
+                #print(f"Condition {cond[1]} is evaluated to {cond[2]} at label {cond[0]}")
                 if cond not in covered_conditions and cond in all_conditions:
                     covered_conditions.append(cond)
 
