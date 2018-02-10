@@ -11,13 +11,16 @@ class TestGenerator:
     def findPaths(self):
         return {}
 
-    def findTests(self):
+    def findTests(self, paths=None):
         """
         For each coverage condition given in find path, search for a solution for at least on of the paths given for
         this condition.
         """
         tests = []
-        for cover_name, possible_path in self.findPaths().items():
+        full_test = True
+        if paths is None:
+            paths = self.findPaths()
+        for cover_name, possible_path in paths.items():
             solution_found = False
             for path in possible_path:
                 vars, constraints = path_predicate(self.cfg, path)
@@ -30,9 +33,9 @@ class TestGenerator:
                     solution_found = True
                     break
             if not solution_found:
-                print(f'No solution found for any path given for coverage condition {cover_name}')
-                return None
-        return tests
+                print(f'WARNING: No solution found for any path given for coverage condition {cover_name}')
+                full_test = False
+        return tests, full_test
 
 
 class TestTAGenerator(TestGenerator):
@@ -95,6 +98,48 @@ class TestiTBGenerator(TestGenerator):
         return paths
 
 
+class TestTDefGenerator(TestGenerator):
+    def __init__(self, prog, max_loop=2):
+        super().__init__(prog)
+        self.max_loop = max_loop
+
+    def findPaths(self):
+        var_list = get_var(self.cfg)
+        paths = {}
+        for variable in var_list:
+            pairs = all_uses(self.cfg, variable)
+            ref_by_def = {}
+            for pair in pairs:
+                if pair[0] in ref_by_def:
+                    ref_by_def[pair[0]].append(pair[1])
+                else:
+                    ref_by_def[pair[0]] = [pair[1]]
+                for def_label in ref_by_def:
+                    paths[f'<Def {def_label}>'] = []
+                    for ref_label in ref_by_def[def_label]:
+                        for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', def_label):
+                            for path2 in get_paths_with_limited_loop(self.cfg, self.max_loop, def_label, ref_label):
+                                paths[f'<Def {def_label}>'].append(path1 + path2[1:])
+        return paths
+
+    def findTests(self, paths=None):
+        full_test = True
+        var_labels = get_assigns(self.cfg)
+        if paths is None:
+            paths = self.findPaths()
+        for label in var_labels:
+            if f'<Def {label}>' not in paths or len(paths[f'<Def {label}>']) == 0:
+                print(f'WARNING: No reference found after assign {label}')
+                full_test = False
+        test, is_full_test = TestGenerator.findTests(self, paths)
+        return test, is_full_test and full_test
+
+
+
+
+
+
+
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
                Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
@@ -138,48 +183,75 @@ if __name__ == '__main__':
 
     print("Solution program 1")
     test_generator = TestTAGenerator(ast)
-    solutionTA = test_generator.findTests()
-    print(solutionTA)
+    solutionTA, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionTA)
 
     print("Solution program 2")
     test_generator = TestTAGenerator(wrong_ast)
-    print(test_generator.findTests())
+    wrongSolutionTA, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionTA)
 
 
     print("\n\nTest TD\n")
 
     print("Solution program 1")
     test_generator = TestTDGenerator(ast)
-    solutionTD = test_generator.findTests()
-    print(solutionTD)
+    solutionTD, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionTD)
 
     print("Solution program 2")
     test_generator = TestTDGenerator(wrong_ast)
-    print(test_generator.findTests())
+    wrongSolutionTD, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionTD)
 
 
     print("\n\nTest k-TC\n")
 
     print("Solution program 1")
     test_generator = TestkTCGenerator(ast, 6)
-    solutionkTC = test_generator.findTests()
-    print(solutionkTC)
+    solutionkTC, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionkTC)
 
     print("Solution program 2")
     test_generator = TestkTCGenerator(wrong_ast, 6)
-    print(test_generator.findTests())
+    wrongSolutionkTC, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionkTC)
 
 
     print("\n\nTest i-TB\n")
 
     print("Solution program 1")
     test_generator = TestiTBGenerator(ast, 2)
-    solutioniTB = test_generator.findTests()
-    print(solutioniTB)
+    solutioniTB, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutioniTB)
 
     print("Solution program 2")
     test_generator = TestiTBGenerator(wrong_ast, 2)
-    print(test_generator.findTests())
+    wrongSolutioniTB, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutioniTB)
+
+
+    print("\n\nTest TDef\n")
+
+    print("Solution program 1")
+    test_generator = TestTDefGenerator(ast)
+    solutionTDef, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionTDef)
+
+    print("Solution program 2")
+    test_generator = TestTDefGenerator(wrong_ast)
+    wrongSolutionTDef, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionTDef)
 
 
     print("\n\nVerify all tests\n")
@@ -190,3 +262,5 @@ if __name__ == '__main__':
     TestkTC(solutionkTC, 6).runTests(copy.deepcopy(ast))
     print()
     TestiTB(solutioniTB, 2).runTests(copy.deepcopy(ast))
+    print()
+    TestTDef(solutionTDef).runTests(copy.deepcopy(ast))
