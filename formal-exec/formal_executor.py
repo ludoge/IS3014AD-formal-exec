@@ -153,6 +153,29 @@ class TestTUGenerator(TestGenerator):
         return paths
 
 
+class TestDUGenerator(TestGenerator):
+    def __init__(self, prog, max_loop=2):
+        super().__init__(prog)
+        self.max_loop = max_loop
+
+    def findPaths(self):
+        var_list = get_var(self.cfg)
+        paths = {}
+        for variable in var_list:
+            pairs = all_uses(self.cfg, variable)
+            for pair in pairs:
+                # Between the two labels of the pair, we only allow simple paths, and each simple path has its own entry
+                # in the paths dictionary.
+                i = 0
+                for path2 in get_paths_with_limited_loop(self.cfg, 1, pair[0], pair[1]):
+                    paths[f'<Ref {pair[1]} for Ref {pair[0]} - path n°{i}>'] = []
+                    # Before the first label of the pair, we allow max_loop loops to get all possible way to reach the
+                    # simple path.
+                    for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', pair[0]):
+                        paths[f'<Ref {pair[1]} for Ref {pair[0]} - path n°{i}>'].append([path1 + path2[1:]])
+                    i += 1
+        return paths
+
 
 
 if __name__ == '__main__':
@@ -284,6 +307,21 @@ if __name__ == '__main__':
         print(wrongSolutionTU)
 
 
+    print("\n\nTest DU\n")
+
+    print("Solution program 1")
+    test_generator = TestDUGenerator(ast)
+    solutionDU, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(solutionDU)
+
+    print("Solution program 2")
+    test_generator = TestDUGenerator(wrong_ast)
+    wrongSolutionDU, is_full_test = test_generator.findTests()
+    if is_full_test:
+        print(wrongSolutionDU)
+
+
     print("\n\nVerify all tests\n")
     TestTA(solutionTA).runTests(copy.deepcopy(ast))
     print()
@@ -296,3 +334,5 @@ if __name__ == '__main__':
     TestTDef(solutionTDef).runTests(copy.deepcopy(ast))
     print()
     TestTU(solutionTU).runTests(copy.deepcopy(ast))
+    print()
+    TestDU(solutionDU).runTests(copy.deepcopy(ast))
