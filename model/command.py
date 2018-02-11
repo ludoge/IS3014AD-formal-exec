@@ -41,7 +41,7 @@ class WhileNode(AnyNode):
 
 
 class Command(WhileNode):
-    def __init__(self, label=None):
+    def __init__(self, label):
         super().__init__()
         self.typename = "Command"
         if label is not None:
@@ -54,8 +54,8 @@ class Command(WhileNode):
 
 
 class Skip(Command):
-    def __init__(self, label=None):
-        super().__init__()
+    def __init__(self):
+        super().__init__(None)
         self.typename = "Skip"
 
     def exec(self, values={}, path=[]):
@@ -65,7 +65,7 @@ class Skip(Command):
 
 
 class Assign(Command):
-    def __init__(self, variable, expression, label=None):
+    def __init__(self, variable, expression, label):
         super().__init__(label=label)
         self.typename = "Assign"
         variable.parent = self
@@ -85,7 +85,7 @@ class Assign(Command):
 
 class Sequence(Command):
     def __init__(self, command1, command2):
-        super().__init__()
+        super().__init__(None)
         self.typename = "Sequence"
         command1.parent = self
         command2.parent = self
@@ -102,7 +102,7 @@ class Sequence(Command):
 
 
 class If(Command):
-    def __init__(self, expr, thencommand, elsecommand=Skip(), label=None):
+    def __init__(self, expr, thencommand, elsecommand, label):
         super().__init__(label=label)
         self.typename = "If"
         expr.parent = self
@@ -126,7 +126,7 @@ class If(Command):
 
 
 class While(Command):
-    def __init__ (self, expr, command, label=None):
+    def __init__ (self, expr, command, label):
         super().__init__(label=label)
         self.typename = "While"
         expr.parent=self

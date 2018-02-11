@@ -58,7 +58,7 @@ class BooleanBinaryExp(BooleanExp):
         return getattr(self.children[0].eval(values), self.OPERATORS[self.operator])( self.children[1].eval(values))
 
     def __repr__(self):
-        return repr(self.children[0]) + self.operator + repr(self.children[1])
+        return "(" + repr(self.children[0]) + ")" + self.operator + "(" + repr(self.children[1]) + ")"
 
 
 class BooleanUnaryExp(BooleanExp):
@@ -72,7 +72,7 @@ class BooleanUnaryExp(BooleanExp):
         return not self.children[0].eval(values)
 
     def __repr__(self):
-        return "! "+" ".join(map(repr, self.children))
+        return self.operator + "(" + repr(self.children[0]) + ")"
 
 
 if __name__ == '__main__':

@@ -16,7 +16,7 @@ def stringify_expr(expr):
         return str(expr)
 
 
-def exec_edge(cfg, e, valuation, constraints):
+def exec_edge(e, valuation, constraints):
     """
     Given an edge of a control flow graph, a current valuation for variable and constraints, updates them according to
     the command found in the edge
@@ -26,14 +26,14 @@ def exec_edge(cfg, e, valuation, constraints):
     :return:
     """
     if e['booleanexpr'] != BooleanConst(True) and e['booleanexpr'] != BooleanConst(False):
-        expr = stringify_expr(e['booleanexpr'])
+        expr = repr(e['booleanexpr'])
         for v in valuation:
-            expr = expr.replace(v, stringify_expr(valuation[v]))
+            expr = expr.replace(v, str(valuation[v]))
         constraints.add(expr)
 
     if e['command'].typename == "Assign":
         var = e['command'].children[0].name
-        expr = stringify_expr(e['command'].children[1])
+        expr = repr(e['command'].children[1])
         for v in valuation:
             valuation[v] = valuation[v].replace(var, expr)
 
@@ -46,7 +46,7 @@ def path_predicate(cfg, path):
     for i in range(len(path) - 1):
         u, v = path[i], path[i + 1]
         e = cfg[u][v]
-        valuation, constraints = exec_edge(cfg, e, valuation, constraints)
+        valuation, constraints = exec_edge(e, valuation, constraints)
     return valuation, constraints
 
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
     valuation = {'X': 'X', 'Y': 'Y'}
     constraints = set()
     e = [cfg[u][v] for (u, v) in cfg.edges][2]
-    exec_edge(cfg, e, valuation, constraints)
+    exec_edge(e, valuation, constraints)
 
     path = get_paths(cfg, 10)[0]
     print(path)
