@@ -64,6 +64,7 @@ class BooleanUnaryExp(BooleanExp):
     def __init__(self, operator, exp):
         super().__init__()
         self.typename = "BooleanUnaryExp"
+        self.operator = operator
         exp.parent = self
 
     def eval(self, values ={}):
