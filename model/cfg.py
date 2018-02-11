@@ -291,6 +291,9 @@ def check_no_assign_sub_path(cfg, path, variable):
     u = path[0]
     v = path[-1]
 
+    if len(path) < 2:
+        return False
+
     # Check if variable is assigned after u
     if variable not in get_def_after_label(cfg, u):
         return False
