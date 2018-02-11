@@ -14,7 +14,7 @@ def exec_edge(e, valuation, constraints):
     if e['booleanexpr'] != BooleanConst(True) and e['booleanexpr'] != BooleanConst(False):
         expr = repr(e['booleanexpr'])
         for v in valuation:
-            expr = expr.replace(v, stringify_expr(valuation[v]))
+            expr = expr.replace(v, str(valuation[v]))
         constraints.add(expr)
 
     if e['command'].typename == "Assign":
@@ -51,7 +51,7 @@ if __name__ == '__main__':
     valuation = {'X': 'X', 'Y': 'Y'}
     constraints = set()
     e = [cfg[u][v] for (u, v) in cfg.edges][2]
-    exec_edge(cfg, e, valuation, constraints)
+    exec_edge(e, valuation, constraints)
 
     path = get_paths(cfg, 10)[0]
     print(path)
