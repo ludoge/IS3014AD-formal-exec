@@ -54,7 +54,7 @@ class ArithmBinExp(ArithmExp):
         return getattr(self.children[0].eval(values), self.OPERATORS[self.operator])(self.children[1].eval(values))
 
     def __repr__(self):
-        return f"({self.children[0])}) {self.operator} ({repr(self.children[1])})"
+        return "(" + repr(self.children[0]) + ")" + self.operator + "(" + repr(self.children[1]) + ")"
 
 
 class ArithmUnaryExp(ArithmExp):
@@ -73,7 +73,7 @@ class ArithmUnaryExp(ArithmExp):
         return getattr(self.children[0].eval(values), self.OPERATORS[self.operator])()
 
     def __repr__(self):
-        return f"{self.operator} ({repr(self.children[0])})"
+        return self.operator + "(" + repr(self.children[0]) + ")"
 
 if __name__ == '__main__':
     from anytree import RenderTree

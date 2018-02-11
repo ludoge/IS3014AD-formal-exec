@@ -2,20 +2,6 @@ from model.cfg import *
 from model.arithmexpr import *
 from model.booleanexpr import *
 
-def stringify_expr(expr):
-    """
-    Convert a boolean or an artitmexpr into a string (with parenthesis) to define constraints
-    """
-    if expr is BooleanConst or expr is BooleanVar or expr is ArithmConst or expr is ArithmVar:
-        return str(expr)
-    elif expr is BooleanBinaryExp or expr is ArithmBinExp:
-        return "(" + stringify_expr(expr.children[0]) + ")" + expr.operator + "(" + stringify_expr(expr.children[1]) + ")"
-    elif expr is BooleanUnaryExp or expr is ArithmUnaryExp:
-        return expr.operator + "(" + stringify_expr(expr.children[0]) + ")"
-    else:
-        return str(expr)
-
-
 def exec_edge(e, valuation, constraints):
     """
     Given an edge of a control flow graph, a current valuation for variable and constraints, updates them according to
@@ -26,14 +12,14 @@ def exec_edge(e, valuation, constraints):
     :return:
     """
     if e['booleanexpr'] != BooleanConst(True) and e['booleanexpr'] != BooleanConst(False):
-        expr = stringify_expr(e['booleanexpr'])
+        expr = repr(e['booleanexpr'])
         for v in valuation:
             expr = expr.replace(v, stringify_expr(valuation[v]))
         constraints.add(expr)
 
     if e['command'].typename == "Assign":
         var = e['command'].children[0].name
-        expr = stringify_expr(e['command'].children[1])
+        expr = repr(e['command'].children[1])
         for v in valuation:
             valuation[v] = valuation[v].replace(var, expr)
 
