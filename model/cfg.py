@@ -201,13 +201,13 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', current_loops={}):
     Finds all paths with at most i loops for each 'While' starting from u recursively
     """
 
-    if u == v:
-        return [[u]]
-
-    if u in current_loops and current_loops[u][0] > i:
-        return []
+    for w in current_loops:
+        if current_loops[w][0] > i:
+            return []
 
     res = []
+    if u == v:
+        res = [[u]]
     # Case of a WHILE (or an IF) loop, meaning that we increment counter if we stay in the loop, and erase if when exiting
     neighbors = list(cfg.neighbors(u))
     if len(neighbors) == 2:
@@ -228,7 +228,7 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', current_loops={}):
         res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[1], v, new_current_loops) if path != []]
         return res
 
-    return [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, current_loops) if path != []]
+    return res + [[u] + path for neighbor in cfg.neighbors(u) for path in get_paths_with_limited_loop(cfg, i, neighbor, v, current_loops) if path != []]
 
 
 def check_var_next_reference(cfg, variable, path):
