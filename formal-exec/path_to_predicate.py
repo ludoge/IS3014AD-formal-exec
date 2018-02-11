@@ -46,11 +46,7 @@ def path_predicate(cfg, path):
     for i in range(len(path) - 1):
         u, v = path[i], path[i + 1]
         e = cfg[u][v]
-<<<<<<< HEAD
         valuation, constraints = exec_edge(e, valuation, constraints)
-=======
-        valuation, constraints = exec_edge(cfg, e, valuation, constraints)
->>>>>>> d90e978272eb736b8167fb52a729f919ee9d645e
     return valuation, constraints
 
 
