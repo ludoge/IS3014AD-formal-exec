@@ -1,15 +1,15 @@
 from collections import defaultdict
 from constraint import *
-from path_to_predicate import *
+from formal_exec.path_to_predicate import *
 import ast
 
 
 class PredicateSolver(object):
-    def __init__(self, vars=set(), constraints=set()):
+    def __init__(self, vars=set(), constraints=set(), min_range=-20, max_range=20):
         self.problem = Problem()
         self.vars = vars
         for v in vars:
-            self.problem.addVariable(v, range(-100, 100))
+            self.problem.addVariable(v, range(min_range, max_range))
         self.constraints = constraints
 
     def add_constraint(self, constraint):
@@ -17,7 +17,8 @@ class PredicateSolver(object):
         L = list(self.vars)
         for i in range(len(L)):
             expr = expr.replace(L[i], f'args[{i}]')
-        expr = expr.replace("!", 'not')
+        expr = expr.replace("!", 'not').replace("not=", "!=")
+
         #print(expr)
 
         def func(*args):

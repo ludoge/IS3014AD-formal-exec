@@ -155,7 +155,7 @@ class TestTU(Test):
                 for (u, v) in au[variable]:
                     for sp in sub_paths(path, u, v):
                         if check_no_assign_sub_path(cfg, sp, variable):
-                            covered_pairs.update((u, v))
+                            covered_pairs.update([(u, v)])
                             #print(f"Subpath {sp} covers use {u,v}")
         percent_coverage = 100 * len(covered_pairs) / len(pairs)
         #print(f"Test data covers {percent_coverage}% of variables")

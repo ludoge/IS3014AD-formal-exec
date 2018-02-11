@@ -6,11 +6,11 @@ def stringify_expr(expr):
     """
     Convert a boolean or an artitmexpr into a string (with parenthesis) to define constraints
     """
-    if expr is BooleanConst or expr is BooleanVar or expr is ArithmConst or expr is ArithmVar:
+    if isinstance(expr, BooleanConst) or isinstance(expr, BooleanVar) or isinstance(expr, ArithmConst) or isinstance(expr, ArithmVar):
         return str(expr)
-    elif expr is BooleanBinaryExp or expr is ArithmBinExp:
-        return "(" + stringify_expr(expr.children[0]) + ")" + expr.operator + "(" + stringify_expr(expr.children[1]) + ")"
-    elif expr is BooleanUnaryExp or expr is ArithmUnaryExp:
+    elif isinstance(expr, BooleanBinaryExp) or isinstance(expr, ArithmBinExp):
+        return "(" + stringify_expr(expr.children[0]) + ")" + expr.operator.replace("&&", "and").replace("||", "or") + "(" + stringify_expr(expr.children[1]) + ")"
+    elif isinstance(expr, BooleanUnaryExp) or isinstance(expr, ArithmUnaryExp):
         return expr.operator + "(" + stringify_expr(expr.children[0]) + ")"
     else:
         return str(expr)

@@ -1,5 +1,5 @@
-from path_to_predicate import *
-from predicate_solve import *
+from formal_exec.path_to_predicate import *
+from formal_exec.predicate_solve import *
 from model.cfg import *
 from tests.tests import *
 

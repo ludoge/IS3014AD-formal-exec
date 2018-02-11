@@ -20,6 +20,7 @@ class BooleanConst(BooleanExp):
     def __repr__(self):
         return str(self.value)
 
+
 class BooleanVar(BooleanExp):
     def __init__(self, name):
         super().__init__()
