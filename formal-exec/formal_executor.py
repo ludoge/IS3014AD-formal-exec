@@ -255,6 +255,52 @@ class TestTCGenerator(TestGenerator):
         return tests, full_test
 
 
+class FullTest:
+    def __init__(self, prog, k_list, i_list, max_loop = 2):
+        self.prog = prog
+        self.k_list = k_list
+        self.i_list = i_list
+        self.max_loop = max_loop
+
+    def findFullTest(self):
+        tests = []
+        print("Test TA")
+        test_generator = TestTAGenerator(self.prog, self.max_loop)
+        solutionTA = test_generator.findReducedTests()
+        tests += [test for test in solutionTA if test not in tests]
+        print("Test TD")
+        test_generator = TestTDGenerator(self.prog, self.max_loop)
+        solutionTD = test_generator.findReducedTests()
+        tests += [test for test in solutionTD if test not in tests]
+        for k in self.k_list:
+            print(f"Test {k}-TC")
+            test_generator = TestkTCGenerator(self.prog, k)
+            solutionkTC = test_generator.findReducedTests()
+            tests += [test for test in solutionkTC if test not in tests]
+        for i in self.i_list:
+            print(f"Test {i}-TB")
+            test_generator = TestiTBGenerator(self.prog, i)
+            solutioniTB = test_generator.findReducedTests()
+            tests += [test for test in solutioniTB if test not in tests]
+        print("Test TDef")
+        test_generator = TestTDefGenerator(self.prog, self.max_loop)
+        solutionTDef = test_generator.findReducedTests()
+        tests += [test for test in solutionTDef if test not in tests]
+        print("Test TU")
+        test_generator = TestTUGenerator(self.prog, self.max_loop)
+        solutionTU = test_generator.findReducedTests()
+        tests += [test for test in solutionTU if test not in tests]
+        print("Test DU")
+        test_generator = TestDUGenerator(self.prog, self.max_loop)
+        solutionDU = test_generator.findReducedTests()
+        tests += [test for test in solutionDU if test not in tests]
+        print("Test TC")
+        test_generator = TestTDGenerator(self.prog, self.max_loop)
+        solutionTD = test_generator.findReducedTests()
+        tests += [test for test in solutionTD if test not in tests]
+        return tests
+
+
 if __name__ == '__main__':
     p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
                Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
@@ -292,105 +338,7 @@ if __name__ == '__main__':
     """
 
     print(ast)
-
-    print("\n\nTest TA\n")
-
-    print("Solution program 1")
-    test_generator = TestTAGenerator(ast)
-    solutionTA = test_generator.findReducedTests()
-    print(solutionTA)
-
-    print("Solution program 2")
-    test_generator = TestTAGenerator(wrong_ast)
-    wrongSolutionTA = test_generator.findReducedTests()
-    print(wrongSolutionTA)
-
-
-    print("\n\nTest TD\n")
-
-    print("Solution program 1")
-    test_generator = TestTDGenerator(ast)
-    solutionTD = test_generator.findReducedTests()
-    print(solutionTD)
-
-    print("Solution program 2")
-    test_generator = TestTDGenerator(wrong_ast)
-    wrongSolutionTD = test_generator.findReducedTests()
-    print(wrongSolutionTD)
-
-
-    print("\n\nTest k-TC\n")
-
-    print("Solution program 1")
-    test_generator = TestkTCGenerator(ast, 6)
-    solutionkTC = test_generator.findReducedTests()
-    print(solutionkTC)
-
-    print("Solution program 2")
-    test_generator = TestkTCGenerator(wrong_ast, 6)
-    wrongSolutionkTC = test_generator.findReducedTests()
-    print(wrongSolutionkTC)
-
-
-    print("\n\nTest i-TB\n")
-
-    print("Solution program 1")
-    test_generator = TestiTBGenerator(ast, 2)
-    solutioniTB = test_generator.findReducedTests()
-    print(solutioniTB)
-
-    print("Solution program 2")
-    test_generator = TestiTBGenerator(wrong_ast, 2)
-    wrongSolutioniTB = test_generator.findReducedTests()
-    print(wrongSolutioniTB)
-
-
-    print("\n\nTest TDef\n")
-
-    print("Solution program 1")
-    test_generator = TestTDefGenerator(ast)
-    solutionTDef = test_generator.findReducedTests()
-    print(solutionTDef)
-
-    print("Solution program 2")
-    test_generator = TestTDefGenerator(wrong_ast)
-    wrongSolutionTDef = test_generator.findReducedTests()
-    print(wrongSolutionTDef)
-
-
-    print("\n\nTest TU\n")
-
-    print("Solution program 1")
-    test_generator = TestTUGenerator(ast)
-    solutionTU = test_generator.findReducedTests()
-    print(solutionTU)
-
-    print("Solution program 2")
-    test_generator = TestTUGenerator(wrong_ast)
-    wrongSolutionTU = test_generator.findReducedTests()
-    print(wrongSolutionTU)
-
-
-    print("\n\nTest DU\n")
-
-    print("Solution program 1")
-    test_generator = TestDUGenerator(ast)
-    solutionDU = test_generator.findReducedTests()
-    print(solutionDU)
-
-    print("Solution program 2")
-    test_generator = TestDUGenerator(wrong_ast)
-    wrongSolutionDU = test_generator.findReducedTests()
-    print(wrongSolutionDU)
-
-    print("\n\nTest TC\n")
-
-    print("Solution program 1")
-    test_generator = TestTCGenerator(ast)
-    solutionTC = test_generator.findReducedTests()
-    print(solutionTC)
-
-    print("Solution program 2")
-    test_generator = TestTCGenerator(wrong_ast)
-    wrongSolutionTC = test_generator.findReducedTests()
-    print(wrongSolutionTC)
+    print()
+    print(FullTest(ast, [4,6,8], [1,2], 2).findFullTest())
+    print()
+    print(FullTest(wrong_ast, [4, 6, 8], [1, 2], 2).findFullTest())
