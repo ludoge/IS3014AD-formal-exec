@@ -28,7 +28,7 @@ _p2 = While(
     label=2)
 
 _p0 = If(
-    BooleanBinaryExp('||',
+    BooleanBinaryExp('&&',
                      BooleanBinaryExp('>=', ArithmVar('A'), ArithmConst(0)),
                      BooleanBinaryExp('>', ArithmVar('B'), ArithmConst(0))
                      ),
