@@ -33,7 +33,7 @@ _p0 = If(
                      BooleanBinaryExp('>', ArithmVar('B'), ArithmConst(0))
                      ),
     Sequence(_p1, _p2),
-    Skip(label=6),
+    Skip(),
     label=0)
 
 prog = _p0

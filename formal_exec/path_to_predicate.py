@@ -26,14 +26,14 @@ def exec_edge(e, valuation, constraints):
     :return:
     """
     if e['booleanexpr'] != BooleanConst(True) and e['booleanexpr'] != BooleanConst(False):
-        expr = repr(e['booleanexpr'])
+        expr = stringify_expr(e['booleanexpr'])
         for v in valuation:
-            expr = expr.replace(v, str(valuation[v]))
+            expr = expr.replace(v, stringify_expr(valuation[v]))
         constraints.add(expr)
 
     if e['command'].typename == "Assign":
         var = e['command'].children[0].name
-        expr = repr(e['command'].children[1])
+        expr = stringify_expr(e['command'].children[1])
         for v in valuation:
             valuation[v] = valuation[v].replace(var, expr)
 
