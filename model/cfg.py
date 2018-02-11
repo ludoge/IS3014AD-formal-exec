@@ -128,6 +128,31 @@ def get_ref(cfg):
     return res
 
 
+def get_def_after_label(cfg, label):
+    """
+    Return the variable assigned at this label. If no variable is assigned at this label, return an empty set.
+    """
+    res = set()
+    for v in cfg.neighbors(label):
+        if cfg[label][v]['command'].typename == "Assign":
+            res.update(cfg[label][v]['command'].children[0].name)
+    return res
+
+
+def get_ref_after_label(cfg, label):
+    """
+    Return the set of variables which are referenced at this label.
+    """
+    res = set()
+    for v in cfg.neighbors(label):
+        exp, command = cfg[label][v]['booleanexpr'], cfg[label][v]['command']
+        if exp is not None:
+            res.update(get_var_from_exp(exp))
+        if command.typename == "Assign":
+            res.update(get_var_from_exp(command.children[1]))
+    return res
+
+
 def execution_path(graph, values):
     current_node = 'START'
     path = []
@@ -265,18 +290,18 @@ def check_no_assign_sub_path(cfg, path, variable):
     """
     u = path[0]
     v = path[-1]
-    deff = get_def(cfg.subgraph(list(cfg.successors(u)) + [u]))
-    if deff != {variable}:
+
+    # Check if variable is assigned after u
+    if variable not in get_def_after_label(cfg, u):
         return False
 
-    ref = get_ref(cfg.subgraph(list(cfg.successors(v)) + [v]))
-    if variable not in ref:
+    # Check if variable is referenced after v
+    if variable not in get_ref_after_label(cfg, v):
         return False
 
     for i in range(1, len(path) - 1):
         w = path[i]
-        ref = get_ref(cfg.subgraph(list(cfg.successors(w)) + [w]))
-        if variable in ref:
+        if variable in get_def_after_label(cfg, w):
             return False
     return True
 
