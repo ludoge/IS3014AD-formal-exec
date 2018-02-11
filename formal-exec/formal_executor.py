@@ -230,9 +230,9 @@ class TestTCGenerator(TestGenerator):
         for label in self.conditions:
             for condition in self.conditions[label]:
                 for cond_value in [True, False]:
-                    condition_string = str(condition)
+                    condition_string = stringify_expr(condition)
                     if not cond_value:
-                        condition_string = str(BooleanUnaryExp("!", condition))
+                        condition_string = stringify_expr(BooleanUnaryExp("!", condition))
                     solution_found = False
                     for path in paths[f'<Conditions {label}>']:
                         vars, constraints = path_predicate(self.cfg, path)
