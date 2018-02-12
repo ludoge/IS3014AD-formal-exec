@@ -11,7 +11,7 @@ def stringify_expr(expr):
     elif isinstance(expr, BooleanBinaryExp) or isinstance(expr, ArithmBinExp):
         return "(" + stringify_expr(expr.children[0]) + ")" + expr.operator.replace("&&", "and").replace("||", "or") + "(" + stringify_expr(expr.children[1]) + ")"
     elif isinstance(expr, BooleanUnaryExp) or isinstance(expr, ArithmUnaryExp):
-        return expr.operator + "(" + stringify_expr(expr.children[0]) + ")"
+        return expr.operator.replace("!", "not").replace("not=", "!=") + "(" + stringify_expr(expr.children[0]) + ")"
     else:
         return str(expr)
 

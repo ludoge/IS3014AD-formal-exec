@@ -199,7 +199,7 @@ class TestDUGenerator(TestGenerator):
                     # Before the first label of the pair, we allow max_loop loops to get all possible way to reach the
                     # simple path.
                     for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', pair[0]):
-                        paths[f'<Ref {pair[1]} for Def {pair[0]} - path {path2}>'].append([path1 + path2[1:]])
+                        paths[f'<Ref {pair[1]} for Def {pair[0]} - path {path2}>'].append(path1 + path2[1:])
         return paths
 
 
@@ -290,9 +290,9 @@ class FullTest:
         solutionDU = test_generator.findReducedTests()
         tests += [test for test in solutionDU if test not in tests]
         print("Test TC")
-        test_generator = TestTDGenerator(self.prog, self.max_loop)
-        solutionTD = test_generator.findReducedTests()
-        tests += [test for test in solutionTD if test not in tests]
+        test_generator = TestTCGenerator(self.prog, self.max_loop)
+        solutionTC = test_generator.findReducedTests()
+        tests += [test for test in solutionTC if test not in tests]
         return tests
 
 
