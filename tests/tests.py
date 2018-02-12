@@ -10,6 +10,7 @@ import networkx as nx
 class Test(object):
     def __init__(self, data):
         self.data = data
+        self.print_missing = False
 
 
 class TestTA(Test):
@@ -33,7 +34,10 @@ class TestTA(Test):
                         covered_assignments.append(a)
 
         percent_coverage = 100*len(covered_assignments)/len(assignments)
-        #print(f"Test data covers {percent_coverage}% of assignments")
+        if self.print_missing:
+            for assignment in assignments:
+                if assignment not in covered_assignments:
+                    print(f"Assignment {assignment} not covered.")
         return percent_coverage
 
 
@@ -63,7 +67,10 @@ class TestTD(Test):
                         covered_decisions.append(d)
 
         percent_coverage = 100*len(covered_decisions)/len(decisions)
-        #print(f"Test data covers {percent_coverage}% of decisions")
+        if self.print_missing:
+            for decision in decisions:
+                if decision not in covered_decisions:
+                    print(f"Decision {decision} not covered.")
         return percent_coverage
 
 
@@ -86,7 +93,10 @@ class TestkTC(Test):
                     covered_k_paths.append(path)
 
         percent_coverage = 100*len(covered_k_paths)/len(k_paths)
-        #print(f"Test data covers {percent_coverage}% of {self.k}-paths")
+        if self.print_missing:
+            for path in k_paths:
+                if path not in covered_k_paths:
+                    print(f"Path {path} not covered.")
         return percent_coverage
 
 
@@ -109,7 +119,10 @@ class TestiTB(Test):
                     covered_i_loops.append(path)
 
         percent_coverage = 100*len(covered_i_loops)/len(i_loops)
-        #print(f"Test data covers {percent_coverage}% of {self.i}-loops")
+        if self.print_missing:
+            for path in i_loops:
+                if path not in covered_i_loops:
+                    print(f"Path {path} not covered.")
         return percent_coverage
 
 
@@ -132,7 +145,10 @@ class TestTDef(Test):
                     covered_definitions.append(a)
 
         percent_coverage = 100 * len(covered_definitions) / len(definitions)
-        #print(f"Test data covers {percent_coverage}% of definitions")
+        if self.print_missing:
+            for definition in definitions:
+                if definition not in covered_definitions:
+                    print(f"Definition {definition} not covered.")
         return percent_coverage
 
 
@@ -158,7 +174,10 @@ class TestTU(Test):
                             covered_pairs.update([(u, v)])
                             #print(f"Subpath {sp} covers use {u,v}")
         percent_coverage = 100 * len(covered_pairs) / len(pairs)
-        #print(f"Test data covers {percent_coverage}% of variables")
+        if self.print_missing:
+            for pair in pairs:
+                if pair not in covered_pairs:
+                    print(f"Pair Def-Ref {pair} not covered.")
         return percent_coverage
 
 
@@ -177,7 +196,6 @@ class TestDU(Test):
                 for path in get_paths_with_limited_loop(cfg, 1, u, v):
                     if path not in simple_paths and check_no_assign_sub_path(cfg, path, variable):
                         simple_paths.append(path)
-
         covered_simple_paths = []
         for value in self.data:
             path = execution_path(cfg, value)
@@ -188,9 +206,11 @@ class TestDU(Test):
                             #print(f"Subpath {sp} is covered")
                             if sp not in covered_simple_paths:
                                 covered_simple_paths.append(sp)
-
         percent_coverage = 100 * len(covered_simple_paths) / len(simple_paths)
-        #print(f"Test data covers {percent_coverage}% of paths")
+        if self.print_missing:
+            for path in simple_paths:
+                if path not in covered_simple_paths:
+                    print(f"Simple path {path} not covered.")
         return percent_coverage
 
 
@@ -210,7 +230,10 @@ class TestTC(Test):
                     covered_conditions.append(cond)
 
         percent_coverage = 100 * len(covered_conditions) / len(all_conditions)
-        #print(f"Test data covers {percent_coverage}% of paths")
+        if self.print_missing:
+            for condition in all_conditions:
+                if condition not in covered_conditions:
+                    print(f"Condition {condition} not covered.")
         return percent_coverage
 
 
@@ -220,8 +243,7 @@ if __name__ == '__main__':
     #ast = If(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1),label=2), label=1)
 
     p1 = ast = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
-                     Sequence(Assign(ArithmVar('X'), ArithmBinExp('+', ArithmVar('X'), ArithmConst(1)), label=0.5),
-                              Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1)),
+                              Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
                      label=0)
     p2 = If(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1), label=3),
             Assign(ArithmVar('Y'), ArithmConst(-1), label=4), label=2)
@@ -247,7 +269,7 @@ if __name__ == '__main__':
     # testTDef.runTests(ast)
 
     #testTU = TestTU(values)
-    #testTU.runTests(ast)
+    #print(testTU.runTests(ast))
 
     testDU = TestDU(values)
     print(testDU.runTests(ast))
