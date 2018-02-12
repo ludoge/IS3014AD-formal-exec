@@ -108,7 +108,7 @@ class TestkTCGenerator(TestGenerator):
         all_k_paths = get_paths(self.cfg, self.k)
         paths = {}
         for i in range(len(all_k_paths)):
-            paths[f'<{self.k}-path n° {i}>'] = [all_k_paths[i]]
+            paths[f'<{self.k}-path {all_k_paths[i]}>'] = [all_k_paths[i]]
         return paths
 
 
@@ -122,7 +122,7 @@ class TestiTBGenerator(TestGenerator):
         all_i_loops = get_paths_with_limited_loop(self.cfg, self.i)
         paths = {}
         for i in range(len(all_i_loops)):
-            paths[f'<{self.i}-loop path n° {i}>'] = [all_i_loops[i]]
+            paths[f'<{self.i}-loop path {all_i_loops[i]}>'] = [all_i_loops[i]]
         return paths
 
 
@@ -135,9 +135,9 @@ class TestTDefGenerator(TestGenerator):
     def findPaths(self):
         var_list = get_var(self.cfg)
         paths = {}
+        ref_by_def = {}
         for variable in var_list:
             pairs = all_uses(self.cfg, variable)
-            ref_by_def = {}
             for pair in pairs:
                 if pair[0] in ref_by_def:
                     ref_by_def[pair[0]].append(pair[1])
@@ -149,19 +149,12 @@ class TestTDefGenerator(TestGenerator):
                         for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', def_label):
                             for path2 in get_paths_with_limited_loop(self.cfg, self.max_loop, def_label, ref_label):
                                 paths[f'<Def {def_label}>'].append(path1 + path2[1:])
+        # Add empty path list for def without ref
+        all_def = get_assigns(self.cfg)
+        for label in all_def:
+            if label not in ref_by_def:
+                paths[f'<Def {label}>'] = []
         return paths
-
-    def findTests(self, paths=None):
-        full_test = True
-        var_labels = get_assigns(self.cfg)
-        if paths is None:
-            paths = self.findPaths()
-        for label in var_labels:
-            if f'<Def {label}>' not in paths or len(paths[f'<Def {label}>']) == 0:
-                print(f'WARNING: No reference found after assign {label}')
-                full_test = False
-        test, is_full_test = TestGenerator.findTests(self, paths)
-        return test, is_full_test and full_test
 
 
 class TestTUGenerator(TestGenerator):
@@ -176,10 +169,10 @@ class TestTUGenerator(TestGenerator):
         for variable in var_list:
             pairs = all_uses(self.cfg, variable)
             for pair in pairs:
-                paths[f'<Ref {pair[1]} for Ref {pair[0]}>'] = []
+                paths[f'<Ref {pair[1]} for Def {pair[0]}>'] = []
                 for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', pair[0]):
                     for path2 in get_paths_with_limited_loop(self.cfg, self.max_loop, pair[0], pair[1]):
-                        paths[f'<Ref {pair[1]} for Ref {pair[0]}>'].append(path1 + path2[1:])
+                        paths[f'<Ref {pair[1]} for Def {pair[0]}>'].append(path1 + path2[1:])
         return paths
 
 
