@@ -37,6 +37,10 @@ class TestGenerator:
             if not solution_found:
                 print(f'WARNING: No solution found for any path given for coverage condition {cover_name}')
                 full_test = False
+        self.test.print_missing = True
+        self.test.data = copy.deepcopy(tests)
+        self.test.runTests(copy.deepcopy(self.prog))
+        self.test.print_missing = False
         return tests, full_test
 
     def findReducedTests(self):
@@ -190,14 +194,12 @@ class TestDUGenerator(TestGenerator):
             for pair in pairs:
                 # Between the two labels of the pair, we only allow simple paths, and each simple path has its own entry
                 # in the paths dictionary.
-                i = 0
                 for path2 in get_paths_with_limited_loop(self.cfg, 1, pair[0], pair[1]):
-                    paths[f'<Ref {pair[1]} for Ref {pair[0]} - path n°{i}>'] = []
+                    paths[f'<Ref {pair[1]} for Def {pair[0]} - path {path2}>'] = []
                     # Before the first label of the pair, we allow max_loop loops to get all possible way to reach the
                     # simple path.
                     for path1 in get_paths_with_limited_loop(self.cfg, self.max_loop, 'START', pair[0]):
-                        paths[f'<Ref {pair[1]} for Ref {pair[0]} - path n°{i}>'].append([path1 + path2[1:]])
-                    i += 1
+                        paths[f'<Ref {pair[1]} for Def {pair[0]} - path {path2}>'].append([path1 + path2[1:]])
         return paths
 
 
