@@ -201,7 +201,10 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', current_loops={}):
     Finds all paths with at most i loops for each 'While' starting from u recursively
     """
 
-    for w in current_loops:
+    # Loops currently running
+    current_loops_labels = [w for w in current_loops if current_loops[w][0] > 0]
+
+    for w in current_loops_labels:
         if current_loops[w][0] > i:
             return []
 
@@ -213,18 +216,20 @@ def get_paths_with_limited_loop(cfg, i, u='START', v='END', current_loops={}):
     if len(neighbors) == 2:
         # Stay in the loop
         new_current_loops = copy.deepcopy(current_loops)
-        if u in new_current_loops:
+        if u in new_current_loops and new_current_loops[u][0] > 0:
+            # Continue to loop
             new_current_loops[u][0] += 1
         else:
+            # Start to loop
             new_current_loops[u] = [1, list(current_loops.keys())]
         res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[0], v, new_current_loops) if path != []]
         # Exit the loop
         new_current_loops = copy.deepcopy(current_loops)
         if u in new_current_loops:
-            del new_current_loops[u]  # Remove this loop
-        for sub_u in new_current_loops.keys():  # Remove all sub-loops
+            new_current_loops[u] = [0, []]  # Remove this loop
+        for sub_u in current_loops_labels:  # Remove all sub-loops
             if u in new_current_loops[sub_u][1]:
-                del new_current_loops[sub_u]
+                new_current_loops[sub_u] = [0, []]
         res += [[u] + path for path in get_paths_with_limited_loop(cfg, i, neighbors[1], v, new_current_loops) if path != []]
         return res
 
