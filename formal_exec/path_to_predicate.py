@@ -28,14 +28,19 @@ def exec_edge(e, valuation, constraints):
     if e['booleanexpr'] != BooleanConst(True) and e['booleanexpr'] != BooleanConst(False):
         expr = stringify_expr(e['booleanexpr'])
         for v in valuation:
-            expr = expr.replace(v, stringify_expr(valuation[v]))
+            expr = expr.replace(v, f"__{v}__")
+        for v in valuation:
+            expr = expr.replace(f"__{v}__", stringify_expr(valuation[v]))
         constraints.add(expr)
 
     if e['command'].typename == "Assign":
         var = e['command'].children[0].name
         expr = stringify_expr(e['command'].children[1])
         for v in valuation:
-            valuation[v] = valuation[v].replace(var, expr)
+            expr = expr.replace(v, f"__{v}__")
+        for v in valuation:
+            expr = expr.replace(f"__{v}__", valuation[v])
+        valuation[var] = expr
 
     return valuation, constraints
 
@@ -51,22 +56,45 @@ def path_predicate(cfg, path):
 
 
 if __name__ == '__main__':
-    p1 = While(BooleanBinaryExp('>', ArithmVar('X'), ArithmConst(0)),
+    _p3 = Assign(
+        ArithmVar('A'),
+        ArithmBinExp('-', ArithmVar('A'), ArithmVar('B')),
+        label=3)
 
-               Assign(ArithmVar('X'), ArithmBinExp('-', ArithmVar('X'), ArithmConst(2)), label=1),
-               label=0)
-    p2 = If(BooleanBinaryExp('>=', ArithmVar('X'), ArithmConst(0)), Assign(ArithmVar('Y'), ArithmConst(1), label=3),
-            Assign(ArithmVar('Y'), ArithmConst(-1), label=4), label=2)
+    _p4 = Assign(
+        ArithmVar('B'),
+        ArithmBinExp('-', ArithmVar('B'), ArithmVar('A')),
+        label=4)
 
-    ast = Sequence(p1, p2)
+    _p2 = If(
+        BooleanBinaryExp('>', ArithmVar('A'), ArithmVar('B')),
+        _p3,
+        _p4,
+        label=2)
 
-    cfg = ast_to_cfg_with_end(ast)
+    _p1 = While(
+        BooleanBinaryExp('!=', ArithmVar('A'), ArithmVar('B')),
+        _p2,
+        label=1)
 
-    valuation = {'X': 'X', 'Y': 'Y'}
+    _p0 = If(
+        BooleanBinaryExp('&&',
+                         BooleanBinaryExp('>', ArithmVar('A'), ArithmConst(0)),
+                         BooleanBinaryExp('>', ArithmVar('B'), ArithmConst(0))
+                         ),
+        _p1,
+        Skip(),
+        label=0)
+
+    prog = _p0
+
+    cfg = ast_to_cfg_with_end(prog)
+
+    """valuation = {'X': 'X', 'Y': 'Y'}
     constraints = set()
     e = [cfg[u][v] for (u, v) in cfg.edges][2]
-    exec_edge(e, valuation, constraints)
+    exec_edge(e, valuation, constraints)"""
 
-    path = get_paths(cfg, 10)[0]
+    path = ['START', 0, 1, 2, 3, 1, 2, 4, 1, 'END']
     print(path)
     print(path_predicate(cfg, path))
