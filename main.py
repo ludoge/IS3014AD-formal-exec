@@ -22,27 +22,35 @@ if __name__ == '__main__':
     if chosen_test == '1':
         print("Test TA")
         testTA = TestTA(copy.deepcopy(test))
+        testTA.print_missing = True
         print(f"Coverage of {int(testTA.runTests(copy.deepcopy(prog))*100)/100}%")
         print("Test TD")
         testTD = TestTD(copy.deepcopy(test))
+        testTD.print_missing = True
         print(f"Coverage of {int(testTD.runTests(copy.deepcopy(prog))*100)/100}%")
         print(f"Test {k_list[0]}-TC")
         testkTC = TestkTC(copy.deepcopy(test), k_list[0])
+        testkTC.print_missing = True
         print(f"Coverage of {int(testkTC.runTests(copy.deepcopy(prog))*100)/100}%")
         print(f"Test {i_list[0]}-TB")
         testiTB = TestiTB(copy.deepcopy(test), i_list[0])
+        testiTB.print_missing = True
         print(f"Coverage of {int(testiTB.runTests(copy.deepcopy(prog))*100)/100}%")
         print("Test TDef")
         testTDef = TestTDef(copy.deepcopy(test))
+        testTDef.print_missing = True
         print(f"Coverage of {int(testTDef.runTests(copy.deepcopy(prog))*100)/100}%")
         print("Test TU")
         testTU = TestTU(copy.deepcopy(test))
+        testTU.print_missing = True
         print(f"Coverage of {int(testTU.runTests(copy.deepcopy(prog))*100)/100}%")
         print("Test DU")
         testDU = TestDU(copy.deepcopy(test))
+        testDU.print_missing = True
         print(f"Coverage of {int(testDU.runTests(copy.deepcopy(prog))*100)/100}%")
         print("Test TC")
         testTC = TestTC(copy.deepcopy(test))
+        testTC.print_missing = True
         print(f"Coverage of {int(testTC.runTests(copy.deepcopy(prog))*100)/100}%")
     elif chosen_test == '2':
         generated_test = FullTest(prog, k_list, i_list).findFullTest()
